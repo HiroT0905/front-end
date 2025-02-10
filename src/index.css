@@ -1,0 +1,145 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --black: #333333;
+  --gray: #bbbbbb;
+  --gray-dark: #7a7a7a;
+  --blue-dark: #1c5291;
+  --blue-light: #386fd6;
+  --yellow: #f7c41c;
+  --red: #ed2e2e;
+  --orange: #ff8127;
+  --green: #00b8cc;
+  --footer: #003364;
+}
+
+.content-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 6; /* Giới hạn số dòng */
+  overflow: hidden;
+  text-overflow: ellipsis; /* Thêm dấu ba chấm */
+}
+
+.tittle-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2; /* Giới hạn số dòng */
+  overflow: hidden;
+  text-overflow: ellipsis; /* Thêm dấu ba chấm */
+}
+
+.hidden-content {
+  display: none;
+}
+
+.info a.active {
+  border-bottom: 4px solid white;
+}
+
+.slice {
+  position: absolute;
+  top: 0;
+  left: 100%;
+  transition: left 0.5s ease-in-out;
+}
+
+.slice.active {
+  left: 0;
+}
+
+.slice.previous {
+  left: -100%;
+}
+
+.content {
+  display: none;
+}
+
+.slice-act {
+  position: absolute;
+  top: 0;
+  left: 100%;
+  transition: left 0.5s ease-in-out;
+}
+
+.slice-act.active {
+  left: 0;
+}
+
+.slice-act.previous {
+  left: -100%;
+}
+
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #f4f4f9;
+}
+
+.login-form {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 400px;
+}
+
+.login-form h2 {
+  text-align: center;
+  color: #333;
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-group label {
+  font-size: 1rem;
+  color: #333;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.input-field {
+  width: 100%;
+  padding: 0.8rem;
+  font-size: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  outline: none;
+}
+
+.input-field:focus {
+  border-color: #4f8bf9;
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 1rem;
+  background-color: #4f8bf9;
+  color: white;
+  font-size: 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.submit-btn:hover {
+  background-color: #3c76d3;
+}
+
+.error-message {
+  color: #e74c3c;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}

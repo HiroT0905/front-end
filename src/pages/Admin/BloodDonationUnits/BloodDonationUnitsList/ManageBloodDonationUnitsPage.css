@@ -1,0 +1,22 @@
+.manage-units {
+  padding: 20px;
+  background-color: #f5f5f5;
+}
+
+.filter-container {
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.filter-input {
+  width: 300px;
+}
+
+.units-grid {
+  margin-top: 20px;
+}
+
+.actions button {
+  margin-left: 10px;
+}
