@@ -1,143 +1,255 @@
-import { Flex, Input, Popconfirm, Table } from "antd";
-import React, { useEffect, useState } from "react";
-import { SearchOutlined } from "@ant-design/icons";
+import React, { useState, useEffect, useCallback } from "react";
+import { Table, Input, Button, Space, Tag, Modal, message, Card } from "antd";
+import { SearchOutlined, EditOutlined, DeleteOutlined, PlusOutlined } from "@ant-design/icons";
 import { Link } from "react-router-dom";
 import { ROUTE_PATH } from "../../../../constants/routes";
 import UserService from "../../../../service/userService";
+import "./style.css";
+
+const { confirm } = Modal;
 
 const EventBloodDonationList = () => {
-  const [searchText, setSearchText] = useState(""); // State cho text tìm kiếm
-  const [events, setEvents] = useState([]); // Dữ liệu các sự kiện
+  const [searchText, setSearchText] = useState("");
+  const [events, setEvents] = useState([]);
+  const [filteredEvents, setFilteredEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
-  // Lấy danh sách sự kiện khi component được mount
-  useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        const response = await UserService.getAllEvents();
-        const allEvents = response.eventDTOList;
-        setEvents(allEvents);
-      } catch (error) {
-        console.error("Error fetching events:", error.message);
-      }
-    };
-
-    fetchEvents();
+  // Fetch events data
+  const fetchEvents = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await UserService.getAllEvents();
+      const allEvents = response.eventDTOList || [];
+      setEvents(allEvents);
+      setFilteredEvents(allEvents);
+    } catch (error) {
+      console.error("Error fetching events:", error);
+      message.error("Đã xảy ra lỗi khi tải danh sách sự kiện");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  // Hàm tìm kiếm
-  const handleSearch = (event) => {
-    setSearchText(event.target.value);
-  };
+  useEffect(() => {
+    fetchEvents();
+  }, [fetchEvents]);
 
-  // Lọc sự kiện theo tên hoặc ngày
-  const filteredEvents = events.filter((event) => {
-    const searchLower = searchText.toLowerCase();
-    return (
-      event.name.toLowerCase().includes(searchLower) ||
-      event.eventDate.includes(searchLower)
-    );
-  });
+  // Handle search functionality
+  const handleSearch = useCallback((e) => {
+    const keyword = e.target.value.toLowerCase();
+    setSearchText(keyword);
 
-  // Cấu hình cột bảng
+    if (!keyword) {
+      setFilteredEvents(events);
+      return;
+    }
+
+    const filtered = events.filter((event) => {
+      return (
+        event?.title?.toLowerCase().includes(keyword) ||
+        event.donateDate.includes(keyword) ||
+        event?.status?.toLowerCase().includes(keyword)
+      );
+    });
+    
+    setFilteredEvents(filtered);
+    setCurrentPage(1);
+  }, [events]);
+
+  // Handle delete event
+  const handleDeleteEvent = useCallback((eventId) => {
+    confirm({
+      title: 'Xác nhận xóa sự kiện',
+      // icon: <ExclamationCircleFilled />,
+      content: 'Bạn có chắc chắn muốn xóa sự kiện này?',
+      okText: 'Xóa',
+      okType: 'danger',
+      cancelText: 'Hủy',
+      async onOk() {
+        try {
+          await UserService.deleteEvent(eventId);
+          message.success('Xóa sự kiện thành công');
+          setEvents(prev => prev.filter(event => event.id !== eventId));
+          setFilteredEvents(prev => prev.filter(event => event.id !== eventId));
+        } catch (error) {
+          console.error("Error deleting event:", error);
+          message.error('Xóa sự kiện thất bại');
+        }
+      },
+    });
+  }, []);
+
+  // Format date
+  const formatDate = useCallback((isoString) => {
+    const date = new Date(isoString);
+    return date.toLocaleDateString("vi-VN", { 
+      day: "2-digit", 
+      month: "2-digit", 
+      year: "numeric" 
+    });
+  }, []);
+
+  // Table columns configuration
   const columns = [
-    {
-      title: "ID",
-      key: "id",
+    { 
+      title: "ID", 
       dataIndex: "id", 
+      key: "id",
+      width: 80,
+      render: (id) => <span className="font-mono">#{id}</span>
     },
-    {
-      title: "Tên sự kiện",
-      key: "name",
-      dataIndex: "name", 
+    { 
+      title: "Tên sự kiện", 
+      dataIndex: "title", 
+      key: "title",
+      ellipsis: true,
+      render: (text) => <span className="font-medium">{text}</span>
     },
-    {
-      title: "Ngày diễn ra",
-      key: "eventDate",
-      dataIndex: "eventDate",
+    { 
+      title: "Ngày diễn ra", 
+      key: "donateDate",
+      render: (_, record) => formatDate(record.donateDate),
+      width: 120,
+      sorter: (a, b) => new Date(a.donateDate) - new Date(b.donateDate)
     },
-    {
-      title: "Thời gian bắt đầu",
-      key: "eventStartTime",
-      dataIndex: "eventStartTime",
+    { 
+      title: "Thời gian", 
+      key: "time",
+      render: (_, record) => (
+        <div className="text-blue-600">
+          {record.eventStartTime} - {record.eventEndTime}
+        </div>
+      ),
+      width: 150
     },
-    {
-      title: "Thời gian kết thúc",
-      key: "eventEndTime",
-      dataIndex: "eventEndTime",
-    },
-    {
-      title: "Số lượng đăng ký",
-      key: "currentRegistrations",
-      render: (record) => `${record.currentRegistrations}/${record.maxRegistrations}`,
-    },
-    {
-      title: "Trạng thái",
-      key: "status",
-      dataIndex: "status", // Hiển thị trực tiếp status từ dữ liệu trả về
-      render: (status) => (
-        <span className={status === "ACTIVE" ? "text-green-500" : "text-red-500"}>
-          {status}
+    { 
+      title: "Số lượng đăng ký", 
+      key: "registrations",
+      render: (_, record) => (
+        <span className="font-semibold">
+          {record.currentRegistrations}/{record.maxRegistrations}
         </span>
       ),
+      width: 150,
+      align: 'center'
     },
-    {
-      title: "Hành động",
+    { 
+      title: "Trạng thái", 
+      dataIndex: "status", 
+      key: "status",
+      render: (status) => (
+        <Tag color={getStatusColor(status)} className="capitalize">
+          {status?.toLowerCase()}
+        </Tag>
+      ),
+      width: 120,
+      filters: [
+        { text: 'Active', value: 'ACTIVE' },
+        { text: 'Inactive', value: 'INACTIVE' },
+        { text: 'Completed', value: 'COMPLETED' },
+      ],
+      onFilter: (value, record) => record.status === value,
+    },
+    { 
+      title: "Hành động", 
       key: "actions",
-      render: (record) => {
-        return (
-          <Flex gap="12px">
-            {/* Edit event */}
-            <Link
-              className="text-blue-500"
-              to={ROUTE_PATH.EVENT_BLOOD_DONATION_EDIT(record.id)} // Chỉnh sửa sự kiện
-            >
-              Chỉnh sửa
-            </Link>
-
-            {/* Delete event */}
-            <Popconfirm
-              title="Delete event"
-              description="Are you sure you want to delete this event?"
-              onConfirm={() => handleDeleteEvent(record.id)} // Xóa sự kiện
-            >
-              <p className="text-red-500 cursor-pointer">Xóa</p>
-            </Popconfirm>
-          </Flex>
-        );
-      },
+      render: (_, record) => (
+        <Space size="middle">
+          <Link to={ROUTE_PATH.EVENT_BLOOD_DONATION_EDIT(record.id)}>
+            <Button 
+              icon={<EditOutlined />} 
+              className="action-btn edit-btn"
+            />
+          </Link>
+          <Button 
+            icon={<DeleteOutlined />} 
+            danger
+            className="action-btn"
+            onClick={() => handleDeleteEvent(record.id)}
+          />
+        </Space>
+      ),
+      width: 120,
+      fixed: 'right'
     },
   ];
 
-  // Hàm xóa sự kiện
-  const handleDeleteEvent = (eventId) => {
-    console.log(`Delete event with ID: ${eventId}`);
-    // Gọi API xóa sự kiện và cập nhật lại danh sách
-    UserService.deleteEvent(eventId).then(() => {
-      setEvents(events.filter(event => event.id !== eventId)); // Cập nhật lại danh sách sự kiện sau khi xóa
-    });
+  // Helper function to get status color
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'ACTIVE': return 'green';
+      case 'INACTIVE': return 'orange';
+      case 'COMPLETED': return 'blue';
+      default: return 'gray';
+    }
   };
 
   return (
-    <>
-      <Flex align="center" justify="space-between">
-        <h1 className="font-semibold text-xl">Danh sách sự kiện hiến máu</h1>
+    <div className="event-management">
+      <Card className="header-card">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold">Quản lý Sự kiện Hiến máu</h1>
+          <Link to={ROUTE_PATH.EVENT_BLOOD_DONATION_CREATE}>
+            <Button type="primary" icon={<PlusOutlined />}>
+              Thêm sự kiện
+            </Button>
+          </Link>
+        </div>
 
-        <Input
-          placeholder="Tìm kiếm tên sự kiện hoặc ngày..."
-          className="w-64"
-          suffix={<SearchOutlined />}
-          size="large"
-          value={searchText}
-          onChange={handleSearch} // Cập nhật state khi người dùng gõ tìm kiếm
+        <div className="mt-4">
+          <Input
+            allowClear
+            size="large"
+            placeholder="Tìm kiếm sự kiện..."
+            prefix={<SearchOutlined />}
+            value={searchText}
+            onChange={handleSearch}
+            className="search-input"
+          />
+        </div>
+      </Card>
+
+      <div className="mt-6">
+        <Table
+          columns={columns}
+          dataSource={filteredEvents}
+          rowKey="id"
+          loading={loading}
+          pagination={{
+            current: currentPage,
+            pageSize: pageSize,
+            total: filteredEvents.length,
+            showTotal: (total) => `Tổng ${total} sự kiện`,
+            showSizeChanger: true,
+            pageSizeOptions: ['10', '20', '50'],
+            onChange: (page, size) => {
+              setCurrentPage(page);
+              setPageSize(size);
+            }
+          }}
+          scroll={{ x: 1000 }}
+          locale={{
+            emptyText: (
+              <div className="py-12 text-center">
+                <img 
+                  src="/empty-events.svg" 
+                  alt="No events" 
+                  className="w-40 mx-auto mb-4 opacity-70"
+                />
+                <p className="text-gray-500 text-lg">
+                  {searchText ? 
+                    "Không tìm thấy sự kiện phù hợp" : 
+                    "Chưa có sự kiện nào"}
+                </p>
+              </div>
+            )
+          }}
+          className="custom-table"
         />
-      </Flex>
-
-      <Table
-        columns={columns}
-        dataSource={filteredEvents} // Dữ liệu đã lọc
-        rowKey="id" // Sử dụng `id` làm khóa duy nhất cho mỗi hàng
-      />
-    </>
+      </div>
+    </div>
   );
 };
 

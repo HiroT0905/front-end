@@ -1,0 +1,72 @@
+/* Main container */
+.event-management {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+  
+  /* Header card */
+  .header-card {
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Search input */
+  .search-input {
+    width: 100%;
+    max-width: 400px;
+  }
+  
+  .search-input .ant-input-prefix {
+    margin-right: 8px;
+    color: #999;
+  }
+  
+  /* Table styles */
+  .custom-table .ant-table-thead > tr > th {
+    background-color: #fafafa;
+    font-weight: 600;
+    color: #333;
+  }
+  
+  .custom-table .ant-table-tbody > tr:hover td {
+    background-color: #f0f7ff;
+  }
+  
+  /* Action buttons */
+  .action-btn {
+    transition: all 0.2s;
+  }
+  
+  .action-btn.edit-btn {
+    color: #1890ff;
+    border-color: #1890ff;
+  }
+  
+  .action-btn.edit-btn:hover {
+    color: #40a9ff;
+    border-color: #40a9ff;
+  }
+  
+  /* Status tags */
+  .ant-tag {
+    font-weight: 500;
+    padding: 0 8px;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .event-management {
+      padding: 16px;
+    }
+    
+    .header-card .flex {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 16px;
+    }
+    
+    .search-input {
+      max-width: 100%;
+    }
+  }

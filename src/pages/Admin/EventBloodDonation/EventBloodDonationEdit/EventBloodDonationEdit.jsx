@@ -20,9 +20,9 @@ const EventBloodDonationEdit = () => {
         const response = await UserService.getEventById(id);
         const eventData = response.eventDTO;
         form.setFieldsValue({
-          name: eventData.name,
+          name: eventData.title,
           location: eventData.donationUnitDTO?.location || "",
-          eventDate: moment(eventData.eventDate, "YYYY-MM-DD"),
+          eventDate: moment(eventData.donateDate, "YYYY-MM-DD"),
           startTime: moment(eventData.eventStartTime, "HH:mm:ss"),
           endTime: moment(eventData.eventEndTime, "HH:mm:ss"),
           maxRegistrations: eventData.maxRegistrations,

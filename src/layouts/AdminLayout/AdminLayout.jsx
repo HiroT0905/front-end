@@ -186,8 +186,9 @@ const AdminLayout = () => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const response = await UserService.getUserById(username);
+        const response = await UserService.getYourProfile(username);
         setUserData(response.user);
+        console.log("user", response.user)
       } catch (error) {
         console.error("Error fetching user data:", error.message);
       }

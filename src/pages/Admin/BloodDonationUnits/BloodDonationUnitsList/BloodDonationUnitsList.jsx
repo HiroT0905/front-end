@@ -69,10 +69,15 @@ const BloodDonationUnitList = () => {
 
   const columns = [
     {
-      title: "Tên đơn vị",
-      dataIndex: "name",
-      key: "name",
+      title: "Ký hiệu",
+      dataIndex: "unit",
+      key: "unit",
       render: (text) => <a>{text}</a>, // Hiển thị tên đơn vị với liên kết
+    },
+    {
+      title: "Tên đơn vị",
+      dataIndex: "donationPlace",
+      key: "donationPlace",
     },
     {
       title: "Địa điểm",

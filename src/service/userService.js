@@ -1,4 +1,4 @@
-import { TrophyFilled } from "@ant-design/icons";
+import axios from "axios";
 import axiosInstance from "../axiosConfig";
 
 
@@ -58,29 +58,31 @@ class UserService{
     }
 
     //Get Profile 
-    static async getYourProfile(token){
-        try{
-            const response = await axiosInstance.get(`/adminuser/get-profile`, 
-            {
-                headers: {Authorization: `Bearer ${token}`}
-            })
-            return response.data;
-        }catch(err){
-            throw err;
-        }
-    }
-    //GetByCCCD
-    static async getUserById(cccd, token){
-        try{
-            const response = await axiosInstance.get(`/admin/get-users/${cccd}`, 
-            {
-                headers: {Authorization: `Bearer ${token}`}
-            })
-            return response.data;
-        }catch(err){
-            throw err;
-        }
-    }
+    static async getYourProfile(token) {
+      try {
+          if (!token) {
+              throw new Error("Token is missing.");
+          }
+  
+          console.log("Using token:", token);
+  
+          const response = await axiosInstance.get(`/adminuser/get-profile`, {
+              headers: {
+                  Authorization: `Bearer ${token}`,
+                  "Content-Type": "application/json",
+              },
+          });
+  
+          return response.data;
+      } catch (err) {
+          console.error("Error fetching profile:", err.message);
+          if (err.response) {
+              console.error("Server response:", err.response.data);
+          }
+          throw new Error("Không thể lấy thông tin hồ sơ.");
+      }
+  }
+  
     //Delete USER
     static async deleteUser(cccd, token){
         try{
@@ -129,7 +131,8 @@ class UserService{
 
     static isAdmin(){
         const role = localStorage.getItem('role')
-        return role === 'ADMIN'
+        console.log("role ", role)
+        return role === "ADMIN"
     }
 
     static isUser(){
@@ -200,7 +203,6 @@ class UserService{
           } else {
             throw new Error("Failed to request password reset");
           }
-        return result.data;
     }
 
 
@@ -217,7 +219,7 @@ class UserService{
         } catch (err) {
             console.error("Error fetching unit data:", err);
             throw err;
-        }
+        } 
     }
     
     //get All Unit
@@ -253,7 +255,7 @@ class UserService{
         
         // Thêm các thông tin dữ liệu vào FormData
         formData.append("data", JSON.stringify({
-        name: unitData.name,
+        name: unitData.unit,
         location: unitData.location,
         email: unitData.email,
         phone: unitData.phone,
@@ -299,7 +301,6 @@ class UserService{
           } else {
             throw new Error("Failed to request password reset");
           }
-        return result.data;
     }
 
     //Get All EventEvent
@@ -344,8 +345,38 @@ class UserService{
             throw err;
         }
     }
+
+    static async getEventsByUnit(token, unitId) {
+      try {
+          // Kiểm tra token
+          if (!token) {
+              throw new Error("Token is required.");
+          }
+  
+          // Gửi yêu cầu tới API backend
+          const response = await axiosInstance.get(`/events/by-unit`, {
+              params: {
+                                    unitId: unitId || ""
+              },
+              headers: {
+                  Authorization: `Bearer ${token}`,
+                  "Content-Type": "application/json",
+              },
+          });
+  
+          console.log("Data fetched:", response?.data?.eventDTOList);
+          return response?.data?.eventDTOList || []; // Đảm bảo trả về mảng rỗng nếu không có dữ liệu
+      } catch (err) {
+          // Xử lý lỗi và thông báo chi tiết
+          console.error("Error fetching events by date range:", err.message);
+          if (err.response && err.response.data) {
+              console.error("Server response:", err.response.data);
+          }
+          throw new Error("Không thể tải danh sách sự kiện. Vui lòng thử lại sau.");
+      }
+  }
     //Get BetweenDate
-    static async getEventsByDateRange(token, startDate, endDate, unitId) {
+    static async getEventsByDateRange(token, startDate, endDate) {
         try {
             // Kiểm tra token
             if (!token) {
@@ -353,11 +384,11 @@ class UserService{
             }
     
             // Gửi yêu cầu tới API backend
-            const response = await axiosInstance.get(`/events/get-by-date-range`, {
+            const response = await axiosInstance.get(`/events/by-date-range`, {
                 params: {
                     startDate: startDate || "", // Chuỗi rỗng nếu không có startDate
                     endDate: endDate || "",     // Chuỗi rỗng nếu không có endDate
-                    unitId: unitId || null,     // Null nếu không có unitId
+                       // Null nếu không có unitId
                 },
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -426,13 +457,32 @@ class UserService{
 
 
       //NEws Service
+      static async getAllNewsForUser() {
+        try {
+          const response = await axiosInstance.get('/news')
+    
+          // Log dữ liệu trả về để kiểm tra cấu trúc của nó
+          console.log("Dữ liệu API trả về:", response.data);
+    
+          // Kiểm tra nếu dữ liệu có trường newsDTO
+          if (response.data && response.data.newsDTOList) {
+            return response.data; // Trả về toàn bộ dữ liệu từ API
+          } else {
+            console.error("Dữ liệu không có trường newsDTO");
+            return {}; // Trả về object rỗng nếu dữ liệu không đúng
+          }
+        } catch (err) {
+          console.error("Lỗi khi gọi API getAllNews:", err.message);
+          throw err;
+        }
+      }
+
 
       //Get All NewsNews
-      static async getAllNews(token) {
+      static async getAllNews() {
         try {
-          const response = await axiosInstance.get('/news', {
-            headers: { Authorization: `Bearer ${token}` }
-          });
+          const response = await axiosInstance.get('/news');
+         
     
           // Log dữ liệu trả về để kiểm tra cấu trúc của nó
           console.log("Dữ liệu API trả về:", response.data);
@@ -498,9 +548,19 @@ class UserService{
             if (!token) {
                 throw new Error("Token is required.");
             }
+            const formattedData = {
+              healthMetrics: {
+                  hasDonatedBefore: healthMetrics.hasDonatedBefore,
+                  hasChronicDiseases: healthMetrics.hasChronicDiseases,
+                  hasRecentDiseases: healthMetrics.hasRecentDiseases,
+                  hasSymptoms: healthMetrics.hasSymptoms,
+                  isPregnantOrNursing: healthMetrics.isPregnantOrNursing,
+                  HIVTestAgreement: healthMetrics.HIVTestAgreement,
+              },
+          };
     
             // Gửi yêu cầu tới API backend
-            const response = await axiosInstance.post(`/appointments/save`,healthMetrics, {
+            const response = await axiosInstance.post(`/appointments/save`,formattedData, {
                 params: {
                     username: username,
                     eventId: eventId     
@@ -657,11 +717,9 @@ class UserService{
         }
     }
 
-    static async getAllFaq(token) {
+    static async getAllFaq() {
         try {
-          const response = await axiosInstance.get('/faq', {
-            headers: { Authorization: `Bearer ${token}` }
-          });
+          const response = await axiosInstance.get('/faq');
     
           // Log dữ liệu trả về để kiểm tra cấu trúc của nó
           console.log("Dữ liệu API trả về:", response.data);
@@ -799,8 +857,49 @@ class UserService{
           throw new Error(err.response ? err.response.data.message : "Có lỗi xảy ra khi gọi API");
         }
       }
+
+        static async chat(message) {
+          try {
+            const response = await axiosInstance.post("/api/chat", { message }, {
+              headers: {
+                "Content-Type": "application/json", // Ensure Content-Type is set
+              },
+            });
       
-    
+            console.log(response);
+
+            if (response.status !== 200) {
+              throw new Error("Failed to fetch");
+            }
+      
+            return response.data;  // assuming the response has a message property
+          } catch (error) {
+            console.error("Error in UserService:", error);
+            throw error;
+          }
+        }
+
+        static async getOptions(username) {
+          try {
+            const response = await axiosInstance.get(`/api/chat/getOptions/${username}`, {
+              headers: {
+                "Content-Type": "application/json", // Ensure Content-Type is set
+              },
+            });
+      
+            console.log(response);
+      
+            // Check if the response status is OK
+            if (response.status !== 200) {
+              throw new Error("Failed to fetch options");
+            }
+      
+            return response.data;  // Returning the options map directly from the response
+          } catch (error) {
+            console.error("Error in UserService:", error);
+            throw error;
+          }
+        }
 }
 
 export default UserService;

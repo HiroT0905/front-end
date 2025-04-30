@@ -59,6 +59,26 @@ function HistoryAppoint() {
   if (loading) {
     return <div className="text-center">Loading...</div>;
   }
+  const formatTime = (timeString) => {
+    const [hour, minute] = timeString.split(":"); // Tách giờ và phút từ chuỗi
+    return `${hour}:${minute}`; // Trả về chuỗi theo format HH:mm
+  };
+  
+  const formatSeconds = (seconds) => {
+    if (typeof seconds !== "number") return "Invalid time"; // Kiểm tra dữ liệu đầu vào
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+  };
+  const formatTimeSlots = (timeSlots) => {
+    return timeSlots
+        .map(slot => `${formatSeconds(slot.donateAcceptTime)} - ${formatSeconds(slot.donateStopTime)}`)
+        .join(", ");
+  }; 
+  const formatDate = (isoString) => {
+    const date = new Date(isoString);
+    return date.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
+};
 
   return (
     <div className="min-h-screen p-4 rounded-lg p-6 max-w-4xl mx-auto">
@@ -73,7 +93,7 @@ function HistoryAppoint() {
             />
             <div className="flex-1">
               <h3 className="text-blue-800 font-semibold">
-                {appointment.event ? appointment.event.name : "Thông tin sự kiện không có"}
+                {appointment.event ? appointment.event.title : "Thông tin sự kiện không có"}
               </h3>
               <p className="text-zinc-600">
                 <span className="inline-block mr-2">
@@ -91,8 +111,8 @@ function HistoryAppoint() {
                     alt="clock icon"
                     className="inline w-4 h-4 mr-1"
                   />
-                  {appointment.event ? `${appointment.event.eventStartTime} - ${appointment.event.eventDate}` : "Không có thời gian"}
-                </span>
+                  {appointment.event ? `${formatDate(appointment.event.donateDate)} : ${formatTime(appointment.event.eventStartTime)} đến ${formatTime(appointment.event.eventEndTime)}` : "Không có thời gian"}
+                </span>   
               </p>
             </div>
             <div className="flex flex-col items-end">

@@ -61,7 +61,6 @@ const App = () => {
       path: ROUTE_PATH.HOME,
       element: <ClientLayout />,
       children: [
-        {},
         {
           path: ROUTE_PATH.FORGOT,
           element: <EmailSending />,

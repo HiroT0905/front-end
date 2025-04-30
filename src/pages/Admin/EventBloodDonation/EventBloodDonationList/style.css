@@ -1,0 +1,130 @@
+/* Main container */
+.blood-donation-search {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px;
+  }
+  
+  /* Search filters */
+  .search-filters {
+    margin-bottom: 24px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .filter-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  
+  .filter-label {
+    display: flex;
+    align-items: center;
+    margin-right: 16px;
+    min-width: 150px;
+    font-weight: 500;
+  }
+  
+  .filter-icon {
+    margin-right: 8px;
+    color: #1890ff;
+  }
+  
+  .date-range-picker {
+    width: 100%;
+    max-width: 400px;
+  }
+  
+  .unit-select {
+    width: 100%;
+    max-width: 300px;
+  }
+  
+  /* Loading state */
+  .loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 300px;
+  }
+  
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 40px;
+  }
+  
+  .empty-image {
+    width: 200px;
+    height: 200px;
+    margin-bottom: 16px;
+    opacity: 0.7;
+  }
+  
+  .empty-text {
+    font-size: 18px;
+    color: #666;
+    margin-bottom: 24px;
+  }
+  
+  /* Results header */
+  .results-header {
+    margin-bottom: 16px;
+  }
+  
+  .results-count {
+    color: #1890ff;
+    font-weight: bold;
+  }
+  
+  /* Event cards */
+  .events-list {
+    display: grid;
+    gap: 16px;
+  }
+  
+  .event-card {
+    border-radius: 8px;
+    overflow: hidden;
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+  
+  .event-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  .event-content {
+    display: flex;
+    gap: 24px;
+  }
+  
+  .event-image {
+    width: 120px;
+    height: 120px;
+    flex-shrink: 0;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  
+  .event-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .event-details {
+    flex: 1;
+  }
+  
+  .event-title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: #333;
+  }
+  
+  .event-info {
+    margin-bottom: 12px
+}

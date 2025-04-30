@@ -37,8 +37,9 @@ export const AdminRoute = () => {
   useEffect(() => {
     const checkAdmin = async () => {
       try {
-        const result = await UserService.isAdmin(); // Kiểm tra quyền admin
+        const result =  UserService.isAdmin(); // Kiểm tra quyền admin
         setIsAdmin(result);
+        console.log("resule", result)
       } catch (error) {
         console.error("Error checking admin status:", error);
         setIsAdmin(false);

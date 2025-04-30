@@ -16,12 +16,12 @@ const BloodDonationUnitsAdd = () => {
       const token = localStorage.getItem("token");
       const formData = new FormData();
 
-      formData.append("name", values.unitsName);
+      formData.append("unit", values.unit);
       formData.append("location", values.location);
       formData.append("email", values.email);
       formData.append("phone", values.phone);
       formData.append("photo", values.photo[0].originFileObj);
-
+      formData.append("donationPlace",values.donationPlace);
       const response = await fetch(`http://localhost:8080/units/add`, {
         method: "POST",
         headers: {
@@ -66,11 +66,18 @@ const BloodDonationUnitsAdd = () => {
             className="bg-white p-5 rounded-lg shadow-md"
           >
             <Form.Item
-              name="unitsName"
+              name="unit"
               label="Tên Đơn Vị"
               rules={[{ required: true, message: "Trường này là bắt buộc" }]}
             >
-              <Input placeholder="Nhập tên đơn vị" />
+              <Input placeholder="Nhập tên viết tắt " />
+            </Form.Item>
+            <Form.Item
+              name="donationPlace"
+              label="Tên Đơn Vị"
+              rules={[{ required: true, message: "Trường này là bắt buộc" }]}
+            >
+              <Input placeholder="Nhập tên đơn vị " />
             </Form.Item>
 
             <Form.Item

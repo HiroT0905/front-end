@@ -25,12 +25,10 @@ const TimeAndAddressTab = ({ onTabChange }) => {
           setLoading(false);
           return;
         }
-
         try {
           // Fetch event details
           const response = await UserService.getEventById(eventId,token );
-          setEvent(response.eventDTO);
-          
+          setEvent(response.eventDTO); 
           console.log("response.eventDTO");
         } catch (error) {
           console.error("Error fetching event data:", error.message);
@@ -89,7 +87,7 @@ const TimeAndAddressTab = ({ onTabChange }) => {
           type="date"
           className="w-full p-2 rounded-lg border-2 border-solid border-[rgb(187,215,253)]"
           readOnly
-          value={event.eventDate}
+          value={event.donateDate}
         />
       </div>
 
@@ -125,28 +123,11 @@ const TimeAndAddressTab = ({ onTabChange }) => {
           Địa điểm
         </label>
         <div className="relative">
-          <select 
-          readOnly
-          className="w-full p-2 rounded-lg border-2 border-solid border-[rgb(187,215,253)] focus:ring-indigo-500 focus:border-indigo-500 appearance-none pr-10">
-            <option>
-              {`${event.name}`}
-            </option>
-          </select>
-          <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              className="h-5 w-5 text-black m-1"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M19 9l-7 7-7-7"
-              ></path>
-            </svg>
+          <div className="w-full p-2 rounded-lg border-2 border-solid border-[rgb(187,215,253)] bg-white">
+            <p className="text-base font-bold text-blue-600">Hiến máu - {event.title}</p>  {/* Tiêu đề lớn hơn */}
+            <p className="text-sm text-gray-600">{event.donationUnitDTO.location}</p>  {/* Địa điểm nhỏ hơn */}
+          </div>
+          <div className="absolute inset-y-0 right-0 flex items-center px-2">
           </div>
         </div>
       </div>
@@ -220,78 +201,3 @@ const TimeAndAddressTab = ({ onTabChange }) => {
 };
 
 export default TimeAndAddressTab;
-
-// return (
-//   <div className="col-span-1 md:col-span-2">
-//     {contextHolder}
-//     <h2 className="text-xl font-semibold mt-6 text-blue-800">
-//       Thời gian &amp; địa điểm
-//     </h2>
-//     <div className="mt-4">
-//       <label className="block pb-0.5">Chọn ngày</label>
-//       <input
-//         type="date"
-//         value={event.eventDate}
-//         readOnly
-//         className="w-full p-2 rounded-lg border-2 border-solid border-[rgb(187,215,253)] bg-gray-100"
-//       />
-//     </div>
-//     <div className="mt-4">
-//       <label className="block text-sm font-medium text-gray-600 pb-0.5">
-//         Tỉnh/Thành phố
-//       </label>
-//       <div className="relative">
-//         <select
-//           value={event.donationUnitDTO.name}
-//           readOnly
-//           className="w-full p-2 rounded-lg border-2 border-solid border-[rgb(187,215,253)] bg-gray-100"
-//         >
-//           <option>{event.donationUnitDTO.name}</option>
-//         </select>
-//       </div>
-//     </div>
-
-//     <div className="mt-4">
-//       <label className="block text-sm font-medium text-gray-600 pb-0.5">
-//         Địa điểm
-//       </label>
-//       <div className="relative">
-//         <select
-//           value={event.donationUnitDTO.location}
-//           readOnly
-//           className="w-full p-2 rounded-lg border-2 border-solid border-[rgb(187,215,253)] bg-gray-100"
-//         >
-//           <option>{event.donationUnitDTO.location}</option>
-//         </select>
-//       </div>
-//     </div>
-
-//     <div className="mt-4">
-//       <label className="block text-sm font-medium text-gray-600 pb-0.5">
-//         Chọn khung giờ bạn sẽ đến hiến máu
-//       </label>
-//       <div className="relative">
-//         <select
-//           readOnly
-//           className="w-full p-2 rounded-lg border-2 border-solid border-[rgb(187,215,253)] bg-gray-100"
-//         >
-//           <option>
-//             {`${event.eventStartTime.slice(0, 5)} - ${event.eventEndTime.slice(
-//               0,
-//               5
-//             )}`}
-//           </option>
-//         </select>
-//       </div>
-//     </div>
-
-//     <div className="flex justify-end mt-6">
-//       <button
-//         onClick={() => onTabChange("FORM")}
-//         className="bg-blue-500 text-white px-6 py-2 rounded-lg"
-//       >
-//         Tiếp tục
-//       </button>
-//     </div>
-//   </div>
-// );

@@ -92,7 +92,7 @@ const Appointments = () => {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span className="font-medium">Họ và tên:</span>
-                <span>{profileInfo.userInfoDTO.fullName || "-"}</span>
+                <span>{profileInfo?.userInfoDTO?.fullName || "-"}</span>
               </div>
               <div className="flex justify-between">
                 <span className="font-medium">Số CMND:</span>
@@ -104,7 +104,7 @@ const Appointments = () => {
               </div>
               <div className="flex justify-between">
                 <span className="font-medium">Giới tính:</span>
-                <span>{profileInfo?.userInfoDTO.sex || "-"}</span>
+                <span>{profileInfo?.userInfoDTO?.sex || "-"}</span>
               </div>
         
             </div>
@@ -116,7 +116,7 @@ const Appointments = () => {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span className="font-medium">Địa chỉ liên lạc:</span>
-                <span>{profileInfo?.userInfoDTO.address || "-"}</span>
+                <span>{profileInfo?.userInfoDTO?.address || "-"}</span>
               </div>
               <div className="flex justify-between">
                 <span className="font-medium">Điện thoại di động:</span>

@@ -9,15 +9,9 @@ const Faq = () => {
 
   useEffect(() => {
     const fetchFaqs = async () => {
-      const token = localStorage.getItem("token"); // Lấy token từ localStorage
-      if (!token) {
-        setError("Token không hợp lệ hoặc không có token.");
-        setLoading(false);
-        return;
-      }
-
+  
       try {
-        const response = await UserService.getAllFaq(token); // Gọi API với token
+        const response = await UserService.getAllFaq(); // Gọi API với token
         console.log("Dữ liệu API trả về:", response.faqDTOList);
 
         if (response && response.faqDTOList) {

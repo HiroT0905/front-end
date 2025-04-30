@@ -8,8 +8,8 @@ const { RangePicker } = DatePicker;
 function BloodDonationSearch() {
   const [filters, setFilters] = useState({
     dateRange: [],
-    organization: "Tất cả",
-    organizationId: null,
+    unit: "Tất cả",
+    unitId: null,
   });
   const [events, setEvents] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -42,7 +42,7 @@ function BloodDonationSearch() {
       const token = localStorage.getItem("token");
       const response = await userService.getAllUnits(token);
       if (Array.isArray(response.donationUnitList)) {
-        setUnits(response.donationUnitList);
+        setUnits(response.donationUnitList);                   
       } else {
         setUnits([]);
       }
@@ -53,7 +53,7 @@ function BloodDonationSearch() {
     }
   };
 
-  const fetchEvents = async (startDate, endDate, organizationId) => {
+  const fetchEvents = async (startDate, endDate) => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
@@ -61,7 +61,6 @@ function BloodDonationSearch() {
         token,
         startDate,
         endDate,
-        organizationId
       );
       setEvents(response || []);
     } catch (err) {
@@ -73,12 +72,13 @@ function BloodDonationSearch() {
       setLoading(false);
     }
   };
+  
 
   const resetFilters = () => {
     setFilters({
       dateRange: [],
-      organization: "Tất cả",
-      organizationId: null,
+      unit: "Tất cả",
+      unitId: null,
     });
     setCurrentPage(1);
     navigate("/events?startDate=&endDate=&unitId=");
@@ -90,20 +90,26 @@ function BloodDonationSearch() {
       const formattedStart = start.format("YYYY-MM-DD");
       const formattedEnd = end.format("YYYY-MM-DD");
       setFilters({ ...filters, dateRange: dates });
-      const url = `/events?startDate=${formattedStart}&endDate=${formattedEnd}&unitId=${filters.organizationId || ""}`;
+      const url = `/events?startDate=${formattedStart}&endDate=${formattedEnd}&unitId=${filters.unitId || ""}`;
       navigate(url);
     } else {
       resetFilters();
     }
   };
 
-  const handleOrganizationChange = (value) => {
-    const unitId = value === "Tất cả" ? null : value;
-    setFilters({ ...filters, organization: value, organizationId: unitId });
+  const handleUnitChange = (value) => {
+    console.log("Selected Unit:", value); // Kiểm tra giá trị được chọn
+  
+    const unitId = value === "Tất cả" ? "" : value; // Đảm bảo không gửi 0 nếu chọn "Tất cả"
+    console.log("Unit ID gửi đi:", unitId); // Xem unitId được cập nhật
+  
+    setFilters({ ...filters, unit: value, unitId });
+  
     const { startDate, endDate } = getQueryParams();
-    const url = `/events?startDate=${startDate || ""}&endDate=${endDate || ""}&unitId=${unitId || ""}`;
+    const url = `/events?startDate=${startDate || ""}&endDate=${endDate || ""}&unitId=${unitId}`;
     navigate(url);
   };
+  
 
   const handleBooking = (event) => {
     const username = localStorage.getItem("username");
@@ -117,6 +123,27 @@ function BloodDonationSearch() {
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentItems = events.slice(startIndex, endIndex);
+
+  const formatDate = (isoString) => {
+    const date = new Date(isoString);
+    return date.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
+};
+const formatTime = (timeString) => {
+  const [hour, minute] = timeString.split(":"); // Tách giờ và phút từ chuỗi
+  return `${hour}:${minute}`; // Trả về chuỗi theo format HH:mm
+};
+
+const formatSeconds = (seconds) => {
+  if (typeof seconds !== "number") return "Invalid time"; // Kiểm tra dữ liệu đầu vào
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
+};
+const formatTimeSlots = (timeSlots) => {
+  return timeSlots
+      .map(slot => `${formatSeconds(slot.donateAcceptTime)} - ${formatSeconds(slot.donateStopTime)}`)
+      .join(", ");
+};
 
   return (
     <div className="max-w-5xl mx-auto p-6 bg-gray-100">
@@ -137,11 +164,11 @@ function BloodDonationSearch() {
           <Button type="default" className="px-6">Đề xuất</Button>
           <Select
             className="w-60"
-            onChange={handleOrganizationChange}
-            value={filters.organization}
+            onChange={handleUnitChange}
+            value={filters.unitId ?? "Tất cả"}
             options={[
               { value: "Tất cả", label: "Tất cả" },
-              ...units.map((unit) => ({ value: unit.id, label: unit.name })),
+              ...units.map((unit) => ({ value: unit.id, label: unit.unit })),
             ]}
           />
         </div>
@@ -166,22 +193,26 @@ function BloodDonationSearch() {
                       className="w-20 h-20 object-contain"
                     />
                     <div>
-                      <h3 className="text-lg font-bold text-blue-600 mb-1">{event.name}</h3>
-                      <p className="text-gray-500 mb-1">{event.donationUnitDTO.location}</p>
-                      <p className="text-gray-500">
-                        Thời gian: {event.eventDate} ({event.eventStartTime} - {event.eventEndTime})
+                      <p className="text-base font-bold text-blue-600 mb-1">{event.title}</p>
+                      <p className="text-sm text-gray-500 mb-1">Địa chỉ: <b>{event.donationUnitDTO.location}</b></p>
+                      <p className="text-sm text-gray-500">
+                        Thời gian hoạt động: <b>{formatDate(event.donateDate)} - Từ ({formatTime(event.eventStartTime)} đến {formatTime(event.eventEndTime)}) </b>
                       </p>
-                      <p className="text-gray-500">
-                        {event.currentRegistrations} / {event.maxRegistrations} Người đã đăng ký
-                      </p>
+                      <p className="text-sm text-gray-500 mb-1">
+                        Thời gian hiến máu:<b>{formatTimeSlots(event.donationTimeSlotDTO)}</b> 
+                      </p>                   
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-2">
+                  <div className="flex flex-col items-start gap-2">
+                    <p className="text-xs text-gray-500 ">Số lượng đăng ký</p>
+                      <p className="text-xl font-bold text-blue-700">
+                        {event.currentRegistrations} / {event.bloodQuotaDTO.maxIBloodBag}
+                      </p>
                     <Button
                       type="primary"
                       onClick={() => handleBooking(event)}
-                      className="px-6"
-                      disabled={event.currentRegistrations >= event.maxRegistrations}
+                      className="px-6 bg-blue-700"
+                      disabled={event.currentRegistrations >= event.bloodQuotaDTO.maxIBloodBag}
                     >
                       Đặt lịch
                     </Button>

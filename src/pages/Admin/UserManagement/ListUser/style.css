@@ -1,0 +1,32 @@
+/* styles.css */
+.custom-search-input {
+    @apply h-12 text-base rounded-lg border-gray-300 hover:border-blue-400 focus:border-blue-500;
+  }
+  
+  .custom-search-input .ant-input-prefix {
+    @apply mr-3;
+  }
+  
+  .custom-table .ant-table-thead > tr > th {
+    @apply bg-gray-50 text-gray-600 font-semibold;
+  }
+  
+  .custom-table .ant-table-tbody > tr:hover td {
+    @apply bg-blue-50;
+  }
+  
+  .custom-table .ant-table-cell {
+    @apply py-3;
+  }
+  
+  .action-btn {
+    @apply transition-all duration-200;
+  }
+  
+  .action-btn.edit-btn {
+    @apply text-blue-600 hover:text-blue-800 border-blue-100;
+  }
+  
+  .ant-tag {
+    @apply font-medium;
+  }
