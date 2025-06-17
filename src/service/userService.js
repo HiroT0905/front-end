@@ -117,6 +117,24 @@ class UserService{
         }
       }
 
+    static async getUserById(username) {
+      try {
+      
+          const response = await axiosInstance.get(`/admin/get-users/${username}`, {
+              headers: {
+                  "Content-Type": "application/json",
+              },
+          });
+  
+          return response.data;
+      } catch (err) {
+          console.error("Error fetching profile:", err.message);
+          if (err.response) {
+              console.error("Server response:", err.response.data);
+          }
+          throw new Error("Không thể lấy thông tin hồ sơ.");
+      }
+    }
 
     /**AUTHENTICATION CHECKER */
     static logout(){
@@ -288,20 +306,19 @@ class UserService{
     //************EVENT
 
     //add Event
-    static async addEvent(formData) {
-        const result = await axiosInstance.post("/admin/events/add", formData, {
-            headers: {
-                ...this.getHeader(),
-                'Content-Type': 'multipart/form-data'
-            }
-        });
-
-        if (result.status === 200) {
-            return result.data; // Trả về dữ liệu từ phản hồi (có thể là thông báo thành công hoặc dữ liệu liên quan)
-          } else {
-            throw new Error("Failed to request password reset");
-          }
-    }
+   static async addEvent(eventData, token) {
+  try {
+    const response = await axiosInstance.post('/events/add', eventData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json' // Quan trọng: chỉ định JSON
+      }
+    });
+    return response.data;
+  } catch (err) {
+    throw err;
+  }
+}
 
     //Get All EventEvent
     static async getAllEvents(token){
@@ -428,31 +445,20 @@ class UserService{
 
 
     //Update Eventnt
-    static async updateEvent(id, eventData, token) {
-        const formData = new FormData();
-        formData.append("name", eventData.name);
-        formData.append("eventDate", eventData.eventDate);
-        formData.append("eventStartTime", eventData.eventStartTime);
-        formData.append("eventEndTime", eventData.eventEndTime);
-        formData.append("maxRegistrations", eventData.maxRegistrations);
-        formData.append("status",eventData.status);
-        if (eventData.donationUnitId) {
-          formData.append("donationUnitId", eventData.donationUnitId);
+            static async updateEvent(id, eventData, token) {
+            try {
+                const response = await axiosInstance.put(`/events/update/${id}`, eventData, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                return response.data;
+            } catch (error) {
+                console.error("Error updating event:", error);
+                throw error;
+            }
         }
-      
-        try {
-          const response = await axiosInstance.put(`/events/update/${id}`, formData, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "multipart/form-data",
-            },
-          });
-          return response.data; // Trả về sự kiện sau khi cập nhật
-        } catch (error) {
-          console.error("Error updating event:", error);
-          throw error;
-        }
-      }
 
 
 
