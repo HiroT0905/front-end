@@ -73,27 +73,50 @@ function RegistrationPage() {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    const token = localStorage.getItem("token");
-    if (token) {
-      alert("You are already logged in. Please log out first.");
-      return;
+  e.preventDefault();
+
+  const token = localStorage.getItem("token");
+  if (token) {
+    alert("Bạn đã đăng nhập. Vui lòng đăng xuất trước khi đăng ký.");
+    return;
+  }
+
+  try {
+    const userData = {
+      ...formData,
+      dob: formatDate(formData.dob),
+      ...contactInfo,
+    };
+
+    const { code, error } = await UserService.register(userData, token);
+    console.log("code: ",code);
+
+    switch (code) {
+      case 200:
+        alert("Đăng ký thành công!");
+        navigate("/login");
+        break;
+
+      case 409:
+        console.warn("⚠️ Người dùng đã tồn tại:", userData.cccd);
+        alert("Người dùng đã tồn tại. Vui lòng sử dụng CCCD khác.");
+        break;
+
+      default:
+        console.error(`🚨 Đăng ký thất bại. Mã lỗi: ${code}. Chi tiết:`, error);
+        alert(`Đã xảy ra lỗi: ${error || "Lỗi không xác định"}`);
     }
 
-    try {
-      const userData = { ...formData, ...contactInfo };
-      const response = await UserService.register(userData, token);
-      if (response.code === 200) {
-        alert("User registered successfully");
-        navigate("/login");
-      } else {
-        alert(`Error: ${response.error}`);
-      }
-    } catch (error) {
-      console.error("Error registering user:", error);
-      alert("An error occurred while registering user.");
-    }
-  };
+  } catch (err) {
+    if (err.response && err.response.status === 409) {
+    console.warn("⚠️ Người dùng đã tồn tại:");
+    alert("Người dùng đã tồn tại. Vui lòng sử dụng CCCD khác.");
+  } else {
+    console.error("❌ Lỗi không mong muốn khi đăng ký:");
+    alert(err);
+  }
+  }
+};
 
   const formatDate = (date) => {
     const d = new Date(date);

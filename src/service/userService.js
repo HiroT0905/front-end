@@ -32,6 +32,8 @@ class UserService{
                 } else if (err.response.status === 500) {
                     // Internal server error
                     throw new Error("Server error. Please try again later.");
+                } else if (err.response.status === 409) {
+                  throw new Error('Người dùng đã tồn tại')
                 }
                 throw new Error(`Error: ${err.response.data.message || "An error occurred during registration."}`);
             } else if (err.request) {
@@ -95,6 +97,25 @@ class UserService{
             throw err;
         }
     }
+
+   static async updateOwnUserProfile(token, cccd, userData) {
+    try {
+        const response = await axiosInstance.put(
+            `/update-own-profile/${cccd}`,
+            userData,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error("Error updating user profile:", error);
+        throw error;
+    }
+}
 
     //Update User
     static async updateUser(username, userData, token) {
@@ -796,6 +817,27 @@ class UserService{
 
 
     //BloodInventory
+    //update Blood Inventory
+  static async updateBloodInventory(token,id, bloodInventoryDTO) {
+  // bloodInventoryDTO phải có các trường: id, donationType, quantity, lastUpdated, expirationDate, appointmentTO
+    try {
+      const response = await axiosInstance.put(`/blood-inventory/update/${id}`, bloodInventoryDTO, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}` // Truyền token vào headers
+        }
+      });
+
+      if (response.status !== 200) {
+        throw new Error("Failed to update blood inventory");
+      }
+      return response.data; // Trả về dữ liệu thành công
+    } catch (error) {
+      console.error("Error updating blood inventory:", error);
+      throw error; // Ném lỗi nếu có
+    }
+  }
+  
     //Get all
     static async getAllBloodInventory(token) {
         try {
@@ -848,7 +890,7 @@ class UserService{
             }catch(err){
                 throw err;
             }
-        }
+      }
 
       //add
       static async addBloodInventory(token, payLoad, appointmentId) {

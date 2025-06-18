@@ -210,7 +210,7 @@ const BloodDonationUnitList = () => {
             className="action-btn view-btn"
             onClick={() => handleViewDetails(record.id)}
           >
-            Chi tiết
+            Chỉnh sửa
           </Button>
           <Button 
             type="link" 
@@ -234,12 +234,12 @@ const BloodDonationUnitList = () => {
         <div className="header-section mb-6">
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-2xl font-bold text-gray-800">Quản lý Cuộc hẹn Hiến máu</h1>
-            <Button 
+            {/* <Button 
               type="primary" 
-              onClick={() => navigate(ROUTE_PATH.APPOINTMENTS_ADMIN_CREATE)}
+              onClick={() => navigate(ROUTE_PATH.APPOINTMENTS_ADMIN_ADD)}
             >
               Tạo cuộc hẹn mới
-            </Button>
+            </Button> */}
           </div>
           
           <div className="search-section mb-4">

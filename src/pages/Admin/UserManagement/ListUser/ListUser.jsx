@@ -17,7 +17,6 @@ const ListUser = () => {
   const [pageSize, setPageSize] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
 
-  // Fetch users data
   const fetchUsers = useCallback(async () => {
     setLoading(true);
     try {
@@ -38,7 +37,6 @@ const ListUser = () => {
     fetchUsers();
   }, [fetchUsers]);
 
-  // Handle search functionality
   const handleSearch = useCallback((e) => {
     const keyword = e.target.value.toLowerCase();
     setSearchText(keyword);
@@ -56,17 +54,15 @@ const ListUser = () => {
         user.userInfoDTO?.fullName?.toLowerCase().includes(keyword) ||
         user.role?.name?.toLowerCase().includes(keyword)
     );
-    
+
     setFilteredUsers(filtered);
     setTotalItems(filtered.length);
     setCurrentPage(1);
   }, [users]);
 
-  // Handle delete user
   const handleDeleteUser = useCallback((username) => {
     confirm({
       title: 'Xác nhận xóa người dùng',
-      // icon: <ExclamationCircleFilled />,
       content: 'Bạn có chắc chắn muốn xóa người dùng này?',
       okText: 'Xóa',
       okType: 'danger',
@@ -75,14 +71,14 @@ const ListUser = () => {
         try {
           await UserService.deleteUser(username);
           message.success('Xóa người dùng thành công');
-          
-          // Update state without refetching
+
           setUsers(prev => prev.filter(user => user.username !== username));
           setFilteredUsers(prev => prev.filter(user => user.username !== username));
           setTotalItems(prev => prev - 1);
-          
-          // Reset to first page if current page becomes empty
-          if (filteredUsers.length % pageSize === 1 && currentPage > 1) {
+
+          // Điều chỉnh lại trang nếu cần
+          const newTotal = filteredUsers.length - 1;
+          if (newTotal <= (currentPage - 1) * pageSize && currentPage > 1) {
             setCurrentPage(currentPage - 1);
           }
         } catch (error) {
@@ -93,15 +89,21 @@ const ListUser = () => {
     });
   }, [currentPage, filteredUsers.length, pageSize]);
 
-  // Handle page change
   const handleTableChange = useCallback((pagination) => {
     setCurrentPage(pagination.current);
     setPageSize(pagination.pageSize);
-    // Scroll to top when page changes
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, []);
 
-  // Table columns configuration
+  const getRoleColor = (role) => {
+    switch (role?.toUpperCase()) {
+      case 'ADMIN': return 'red';
+      case 'STAFF': return 'blue';
+      case 'USER': return 'green';
+      default: return 'gray';
+    }
+  };
+
   const columns = [
     { 
       title: "CCCD", 
@@ -149,12 +151,8 @@ const ListUser = () => {
         </Tag>
       ),
       width: 150,
-      filters: [
-        { text: 'Admin', value: 'ADMIN' },
-        // { text: 'Nhân viên', value: 'STAFF' },
-        { text: 'Người dùng', value: 'USER' },
-      ],
-      onFilter: (value, record) => record.role?.name === value,
+    
+  
     },
     { 
       title: "Hành động", 
@@ -162,10 +160,7 @@ const ListUser = () => {
       render: (_, record) => (
         <Space size="middle">
           <Link to={ROUTE_PATH.EDIT_USER(record.username)}>
-            <Button 
-              icon={<EditOutlined />} 
-              className="action-btn edit-btn"
-            />
+            <Button icon={<EditOutlined />} className="action-btn edit-btn" />
           </Link>
           <Button 
             icon={<DeleteOutlined />} 
@@ -180,15 +175,11 @@ const ListUser = () => {
     },
   ];
 
-  // Helper function to get role color
-  const getRoleColor = (role) => {
-    switch (role?.toUpperCase()) {
-      case 'ADMIN': return 'red';
-      case 'STAFF': return 'blue';
-      case 'USER': return 'green';
-      default: return 'gray';
-    }
-  };
+  // ✅ Tính toán dữ liệu hiển thị cho pagination
+  const paginatedData = filteredUsers.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   return (
     <div className="user-management p-6 bg-gray-50 min-h-screen">
@@ -200,7 +191,6 @@ const ListUser = () => {
               <Button type="primary">Thêm người dùng mới</Button>
             </Link>
           </div>
-          
           <div className="search-section mb-4">
             <Input
               allowClear
@@ -217,10 +207,7 @@ const ListUser = () => {
         <div className="content-section bg-white rounded-xl shadow-lg overflow-hidden">
           <Table
             columns={columns}
-            dataSource={filteredUsers.slice(
-              (currentPage - 1) * pageSize,
-              currentPage * pageSize
-            )}
+            dataSource={paginatedData}
             rowKey="username"
             loading={loading}
             pagination={{

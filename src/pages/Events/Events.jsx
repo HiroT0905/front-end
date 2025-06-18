@@ -160,8 +160,7 @@ const formatTimeSlots = (timeSlots) => {
           />
         </div>
         <div className="flex flex-wrap gap-4">
-          <Button type="default" className="px-6">Gần tôi</Button>
-          <Button type="default" className="px-6">Đề xuất</Button>
+         
           <Select
             className="w-60"
             onChange={handleUnitChange}
@@ -199,7 +198,7 @@ const formatTimeSlots = (timeSlots) => {
                         Thời gian hoạt động: <b>{formatDate(event.donateDate)} - Từ ({formatTime(event.eventStartTime)} đến {formatTime(event.eventEndTime)}) </b>
                       </p>
                       <p className="text-sm text-gray-500 mb-1">
-                        Thời gian hiến máu:<b>{formatTimeSlots(event.donationTimeSlotDTO)}</b> 
+                        Thời gian hiến máu: <b>{formatTimeSlots(event.donationTimeSlotDTO)}</b> 
                       </p>                   
                     </div>
                   </div>

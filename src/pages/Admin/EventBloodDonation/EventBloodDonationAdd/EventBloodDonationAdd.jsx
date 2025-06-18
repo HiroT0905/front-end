@@ -181,7 +181,7 @@ const EventBloodDonationAdd = () => {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Thời gian bắt đầu <span className="text-red-500">*</span>
+                    Thời gian bắt đầu hoạt động <span className="text-red-500">*</span>
                   </label>
                   <TimePicker
                     value={formData.eventStartTime}

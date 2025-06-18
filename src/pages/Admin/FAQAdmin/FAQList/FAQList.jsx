@@ -18,7 +18,7 @@ const FAQList = () => {
       try {
         const response = await UserService.getAllFaq(token); // Sửa hàm API
         console.log("response", response.faqDTOList);
-        setFaqs(response.faqDTOList); // Giả sử API trả về { data: [...faqList] }
+         setFaqs(Array.isArray(response.faqDTOList) ? response.faqDTOList : []); // Giả sử API trả về { data: [...faqList] }
       } catch (error) {
         console.error("Lỗi khi lấy danh sách FAQ:", error.message);
       }
