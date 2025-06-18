@@ -196,7 +196,7 @@ const ListUser = () => {
         <div className="header-section mb-6">
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-2xl font-bold text-gray-800">Quản lý Người dùng</h1>
-            <Link to={ROUTE_PATH.CREATE_USER}>
+            <Link to={ROUTE_PATH.ADD_USER}>
               <Button type="primary">Thêm người dùng mới</Button>
             </Link>
           </div>

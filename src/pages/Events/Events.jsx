@@ -206,13 +206,13 @@ const formatTimeSlots = (timeSlots) => {
                   <div className="flex flex-col items-start gap-2">
                     <p className="text-xs text-gray-500 ">Số lượng đăng ký</p>
                       <p className="text-xl font-bold text-blue-700">
-                        {event.currentRegistrations} / {event.bloodQuotaDTO.maxIBloodBag}
+                        {event.currentRegistrations} / {event.maxRegistrations}
                       </p>
                     <Button
                       type="primary"
                       onClick={() => handleBooking(event)}
                       className="px-6 bg-blue-700"
-                      disabled={event.currentRegistrations >= event.bloodQuotaDTO.maxIBloodBag}
+                      disabled={event.currentRegistrations >= event.maxRegistrations}
                     >
                       Đặt lịch
                     </Button>

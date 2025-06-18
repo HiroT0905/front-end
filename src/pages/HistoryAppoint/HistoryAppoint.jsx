@@ -1,132 +1,110 @@
-import React, { useEffect, useState } from 'react';
-import UserService from '../../service/userService'; // Giả sử bạn có UserService để lấy dữ liệu từ API
+import React, { useEffect, useState, useCallback } from 'react';
+import UserService from '../../service/userService';
+
+import AppointmentCard from './AppointmentCard';
+import AppointmentSkeleton from './AppointmentSkeleton';
+import EmptyState from './EmptyState';
+import ErrorState from './ErrorState';
+
+// --- Constants ---
+const TOKEN_KEY = "token";
+const USERNAME_KEY = "username";
 
 function HistoryAppoint() {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  useEffect(() => {
-    const fetchAppointments = async () => {
-      try {
-        const username = localStorage.getItem("username");
-        const token = localStorage.getItem("token");
+  const fetchAppointments = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-        // Giả sử UserService có hàm lấy lịch sử đặt hẹn
-        const response = await UserService.getAppointmentByUser(token, username);
+      const username = localStorage.getItem(USERNAME_KEY);
+      const token = localStorage.getItem(TOKEN_KEY);
 
-        // Lấy thông tin sự kiện cho mỗi cuộc hẹn
-        const appointmentsWithEvent = await Promise.all(response.map(async (appointment) => {
+      if (!token || !username) {
+        throw new Error("Thông tin xác thực không tồn tại.");
+      }
+
+      const response = await UserService.getAppointmentByUser(token, username);
+
+      const appointmentsWithEvent = await Promise.all(
+        response.map(async (appointment) => {
           if (appointment.eventId) {
-            const eventResponse = await UserService.getEventById(appointment.eventId);
-            console.log("hihi",appointment.status);
-            // Thêm thông tin sự kiện vào appointment
-            return { ...appointment, event: eventResponse.eventDTO }; // Truy cập eventDTO thay vì toàn bộ đối tượng
+            try {
+              const eventResponse = await UserService.getEventById(appointment.eventId);
+              return {
+                ...appointment,
+                event: eventResponse.eventDTO,
+              };
+            } catch (eventError) {
+              console.error(`Error fetching event ${appointment.eventId}:`, eventError);
+              // Vẫn trả về lịch hẹn dù không có thông tin sự kiện
+              return { ...appointment, event: null };
+            }
           }
           return appointment;
-        }));
+        })
+      );
 
-        setAppointments(appointmentsWithEvent);
-      } catch (error) {
-        console.error("Error fetching appointment history:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAppointments();
+      setAppointments(appointmentsWithEvent);
+    } catch (err) {
+      console.error("Error fetching appointment history:", err);
+      setError("Không thể tải lịch sử đặt hẹn. Vui lòng thử lại sau.");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const statusMap = {
-    PENDING: {
-      text: "Đang chờ",
-      color: "bg-yellow-500",  // Example color for "Pending"
-    },
-    CONFIRMED: {
-      text: "Đã xác nhận",
-      color: "bg-blue-500",  // Example color for "Confirmed"
-    },
-    CANCELED: {
-      text: "Đã xoá",
-      color: "bg-red-500",  // Example color for "Canceled"
-    },
-    COMPLETED: {
-      text: "Hoàn thành",
-      color: "bg-green-500",  // Example color for "Completed"
-    },
-  };
-  
+  useEffect(() => {
+    fetchAppointments();
+  }, [fetchAppointments]);
 
-  if (loading) {
-    return <div className="text-center">Loading...</div>;
-  }
-  const formatTime = (timeString) => {
-    const [hour, minute] = timeString.split(":"); // Tách giờ và phút từ chuỗi
-    return `${hour}:${minute}`; // Trả về chuỗi theo format HH:mm
+  const handleAppointmentStatusChange = (appointmentId, newStatus) => {
+      setAppointments(currentAppointments =>
+        currentAppointments.map(app =>
+          app.id === appointmentId ? { ...app, status: newStatus } : app
+        )
+      );
+    };
+
+  const renderContent = () => {
+    if (loading) {
+      // Hiển thị 3 skeleton card để tạo cảm giác đang tải
+      return Array.from({ length: 3 }).map((_, index) => (
+        <AppointmentSkeleton key={index} />
+      ));
+    }
+
+    if (error) {
+      return <ErrorState message={error} onRetry={fetchAppointments} />;
+    }
+
+    if (appointments.length === 0) {
+      return <EmptyState />;
+    }
+
+    return appointments.map((appointment) => (
+      <AppointmentCard key={appointment.id} appointment={appointment}   onStatusUpdate={handleAppointmentStatusChange} />
+    ));
   };
-  
-  const formatSeconds = (seconds) => {
-    if (typeof seconds !== "number") return "Invalid time"; // Kiểm tra dữ liệu đầu vào
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
-  };
-  const formatTimeSlots = (timeSlots) => {
-    return timeSlots
-        .map(slot => `${formatSeconds(slot.donateAcceptTime)} - ${formatSeconds(slot.donateStopTime)}`)
-        .join(", ");
-  }; 
-  const formatDate = (isoString) => {
-    const date = new Date(isoString);
-    return date.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
-};
 
   return (
-    <div className="min-h-screen p-4 rounded-lg p-6 max-w-4xl mx-auto">
-      <h2 className="text-lg font-semibold text-blue-800">Lịch sử đặt hẹn</h2>
-      <div className="mt-4 space-y-4">
-        {appointments.map((appointment) => (
-          <div key={appointment.id} className="flex items-start p-4 bg-zinc-100 rounded-lg shadow-sm">
-            <img
-              src="/assets/img/blood.png"
-              alt="blood drop icon"
-              className="w-14 h-14 mr-4"
-            />
-            <div className="flex-1">
-              <h3 className="text-blue-800 font-semibold">
-                {appointment.event ? appointment.event.title : "Thông tin sự kiện không có"}
-              </h3>
-              <p className="text-zinc-600">
-                <span className="inline-block mr-2">
-                  <img
-                    src="/assets/img/local222.png"
-                    alt="location icon"
-                    className="inline w-4 h-4 mr-1"
-                  />
-                  {appointment.event ? appointment.event.donationUnitDTO.location : "Không có địa điểm"}
-                </span>
-                <br />
-                <span className="inline-block">
-                  <img
-                    src="/assets/img/alarm.png"
-                    alt="clock icon"
-                    className="inline w-4 h-4 mr-1"
-                  />
-                  {appointment.event ? `${formatDate(appointment.event.donateDate)} : ${formatTime(appointment.event.eventStartTime)} đến ${formatTime(appointment.event.eventEndTime)}` : "Không có thời gian"}
-                </span>   
-              </p>
+    <div className="min-h-screen bg-gray-50 p-4 sm:p-6 lg:p-8">
+      <div className="max-w-5xl mx-auto">
+        <header className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-gray-900">Lịch sử Đặt hẹn</h1>
+          {!loading && !error && appointments.length > 0 && (
+            <div className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-medium">
+              {appointments.length} lịch hẹn
             </div>
-            <div className="flex flex-col items-end">
-              <button
-                className={`${statusMap[appointment.status]?.color} text-white px-3 py-1 rounded-full mb-2`}
-              >
-                {statusMap[appointment.status]?.text}
-              </button>
-              <a href={`/appointment/${appointment.id}`} className="text-blue-600">
-                Xem chi tiết
-              </a>
-            </div>
-          </div>
-        ))}
+          )}
+        </header>
+
+        <main className="space-y-4">
+          {renderContent()}
+        </main>
       </div>
     </div>
   );

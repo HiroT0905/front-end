@@ -1,378 +1,344 @@
-import React, { useState, useEffect } from "react";
-import {
-  Button,
-  Form,
-  Input,
-  DatePicker,
-  TimePicker,
-  Select,
-  notification,
-  Row,
-  Col,
-  Steps,
-  Card,
-  Typography,
-  Divider,
-  InputNumber
-} from "antd";
+import React, { useEffect, useState } from "react";
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { DatePicker, TimePicker } from "@mui/x-date-pickers";
+import dayjs from "dayjs";
 import { useNavigate } from "react-router-dom";
-import UserService from "../../../../service/userService";
-import moment from "moment";
-
-const { Step } = Steps;
-const { Title } = Typography;
+import ApiService from "../../../../service/userService";
 
 const EventBloodDonationAdd = () => {
-  const [loading, setLoading] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
-  const [form] = Form.useForm();
-  const [units, setUnits] = useState([]);
-  const [unitsLoading, setUnitsLoading] = useState(false);
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [donationUnits, setDonationUnits] = useState([]);
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
 
-  // Form data state
-  const [eventData, setEventData] = useState({
+  const [formData, setFormData] = useState({
     title: "",
-    donatePlace: "",
-    donateAddress: "",
     donateDate: null,
     eventStartTime: null,
     eventEndTime: null,
+    unit: "",
     maxRegistrations: 0,
     status: "ACTIVE",
-    unit: null,
-    bloodQuotaDTO: {
-      minIBloodBag: 0,
-      maxIBloodBag: 0,
-      goalIBloodBag: 0,
-      additionalIBloodBag: 0
-    }
+    minIBloodBag: 0,
+    maxIBloodBag: 0,
+    goalIBloodBag: 0,
+    additionalIBloodBag: 0,
   });
 
   useEffect(() => {
-    const fetchUnits = async () => {
-      setUnitsLoading(true);
-      try {
-        const token = localStorage.getItem("token");
-        const response = await UserService.getAllUnits(token);
-        setUnits(response.donationUnitList || []);
-      } catch (error) {
-        notification.error({
-          message: "Lỗi",
-          description: "Không thể tải danh sách đơn vị hiến máu"
+    ApiService.getAllUnits()
+      .then((res) => {
+        setDonationUnits(res.donationUnitList || []);
+      })
+      .catch(() => {
+        setSnackbar({
+          open: true,
+          message: "Không thể tải danh sách đơn vị hiến máu.",
+          severity: "error",
         });
-      } finally {
-        setUnitsLoading(false);
-      }
-    };
-    fetchUnits();
+      });
   }, []);
 
-  const handleEventInfoSubmit = async () => {
-    try {
-      const values = await form.validateFields();
-      setEventData(prev => ({
-        ...prev,
-        ...values,
-        donateDate: values.donateDate,
-        eventStartTime: values.eventStartTime,
-        eventEndTime: values.eventEndTime
-      }));
-      setCurrentStep(1);
-    } catch (error) {
-      notification.error({
-        message: "Lỗi",
-        description: "Vui lòng điền đầy đủ thông tin"
-      });
-    }
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleBloodQuotaSubmit = async () => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem("token");
-      
-      // Format data before sending
-      const requestData = {
-        ...eventData,
-        donateDate: eventData.donateDate ? moment(eventData.donateDate).format("YYYY-MM-DD") : null,
-        eventStartTime: eventData.eventStartTime ? moment(eventData.eventStartTime).format("HH:mm:ss") : null,
-        eventEndTime: eventData.eventEndTime ? moment(eventData.eventEndTime).format("HH:mm:ss") : null,
-        bloodQuotaDTO: eventData.bloodQuotaDTO
-      };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    const requiredFields = ['title', 'donateDate', 'eventStartTime', 'eventEndTime', 'unit', 'status'];
+    const isEmpty = requiredFields.some(field => !formData[field]);
+    
+    if (isEmpty) {
+      setSnackbar({
+        open: true,
+        message: "Vui lòng điền đầy đủ thông tin bắt buộc.",
+        severity: "error",
+      });
+      return;
+    }
 
-      const response = await UserService.addEvent(requestData, token);
-      
-      if (response) {
-        notification.success({
-          message: "Thành công",
-          description: "Tạo sự kiện hiến máu thành công!"
-        });
-        navigate("/admin/event-blood-donation");
-      }
-    } catch (error) {
-      notification.error({
-        message: "Lỗi",
-        description: error.response?.data?.message || "Không thể tạo sự kiện"
+    const payload = {
+      ...formData,
+      donateDate: dayjs(formData.donateDate).format("YYYY-MM-DD"),
+      eventStartTime: dayjs(formData.eventStartTime).format("HH:mm:ss"),
+      eventEndTime: dayjs(formData.eventEndTime).format("HH:mm:ss"),
+      maxRegistrations: Number(formData.maxRegistrations),
+      bloodQuotaDTO: {
+        minIBloodBag: Number(formData.minIBloodBag),
+        maxIBloodBag: Number(formData.maxIBloodBag),
+        goalIBloodBag: Number(formData.goalIBloodBag),
+        additionalIBloodBag: Number(formData.additionalIBloodBag),
+      },
+    };
+
+    try {
+      setLoading(true);
+      await ApiService.addEvent(payload);
+      setSnackbar({ open: true, message: "Tạo sự kiện thành công!", severity: "success" });
+      setTimeout(() => navigate("/admin/event-blood-donation"), 1500);
+    } catch (err) {
+      setSnackbar({
+        open: true,
+        message: err.response?.data?.message || "Tạo sự kiện thất bại!",
+        severity: "error",
       });
     } finally {
       setLoading(false);
     }
   };
 
-  const steps = [
-    {
-      title: 'Thông tin sự kiện',
-      content: (
-        <Card title="Thông tin cơ bản" style={{ marginBottom: 24 }}>
-          <Form
-            form={form}
-            layout="vertical"
-            initialValues={eventData}
-          >
-            <Row gutter={16}>
-              <Col span={24}>
-                <Form.Item
-                  name="title"
-                  label="Tên sự kiện"
-                  rules={[{ required: true, message: 'Vui lòng nhập tên sự kiện' }]}
-                >
-                  <Input placeholder="Nhập tên sự kiện" />
-                </Form.Item>
-              </Col>
-              
-              <Col span={12}>
-                <Form.Item
-                  name="donatePlace"
-                  label="Địa điểm tổ chức"
-                  rules={[{ required: true, message: 'Vui lòng nhập địa điểm' }]}
-                >
-                  <Input placeholder="Ví dụ: Hội trường A" />
-                </Form.Item>
-              </Col>
-              
-              <Col span={12}>
-                <Form.Item
-                  name="donateAddress"
-                  label="Địa chỉ chi tiết"
-                  rules={[{ required: true, message: 'Vui lòng nhập địa chỉ' }]}
-                >
-                  <Input placeholder="Ví dụ: 123 Đường ABC" />
-                </Form.Item>
-              </Col>
-              
-              <Col span={24}>
-                <Form.Item
-                  name="unit"
-                  label="Đơn vị tổ chức"
-                  rules={[{ required: true, message: 'Vui lòng chọn đơn vị' }]}
-                >
-                  <Select
-                    loading={unitsLoading}
-                    placeholder="Chọn đơn vị hiến máu"
-                    showSearch
-                    optionFilterProp="children"
-                    filterOption={(input, option) =>
-                      option.children.toLowerCase().includes(input.toLowerCase())
-                    }
-                  >
-                    {units.map(unit => (
-                      <Select.Option key={unit.id} value={unit.id}>
-                        {unit.name} - {unit.location}
-                      </Select.Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-              </Col>
-              
-              <Col span={8}>
-                <Form.Item
-                  name="donateDate"
-                  label="Ngày diễn ra"
-                  rules={[{ required: true, message: 'Vui lòng chọn ngày' }]}
-                >
-                  <DatePicker 
-                    style={{ width: '100%' }}
-                    format="DD/MM/YYYY"
-                    placeholder="Chọn ngày"
-                  />
-                </Form.Item>
-              </Col>
-              
-              <Col span={8}>
-                <Form.Item
-                  name="eventStartTime"
-                  label="Thời gian bắt đầu"
-                  rules={[{ required: true, message: 'Vui lòng chọn thời gian' }]}
-                >
-                  <TimePicker 
-                    style={{ width: '100%' }}
-                    format="HH:mm"
-                    placeholder="Bắt đầu"
-                  />
-                </Form.Item>
-              </Col>
-              
-              <Col span={8}>
-                <Form.Item
-                  name="eventEndTime"
-                  label="Thời gian kết thúc"
-                  rules={[{ required: true, message: 'Vui lòng chọn thời gian' }]}
-                >
-                  <TimePicker 
-                    style={{ width: '100%' }}
-                    format="HH:mm"
-                    placeholder="Kết thúc"
-                  />
-                </Form.Item>
-              </Col>
-              
-              <Col span={12}>
-                <Form.Item
-                  name="maxRegistrations"
-                  label="Số lượng đăng ký tối đa"
-                  rules={[{ required: true, message: 'Vui lòng nhập số lượng' }]}
-                >
-                  <InputNumber 
-                    min={1}
-                    style={{ width: '100%' }}
-                    placeholder="Nhập số lượng"
-                  />
-                </Form.Item>
-              </Col>
-            </Row>
-          </Form>
-        </Card>
-      ),
-    },
-    {
-      title: 'Chỉ tiêu máu',
-      content: (
-        <Card title="Chỉ tiêu hiến máu" style={{ marginBottom: 24 }}>
-          <Row gutter={16}>
-            <Col span={12}>
-              <Form.Item label="Số túi máu tối thiểu">
-                <InputNumber
-                  min={0}
-                  value={eventData.bloodQuotaDTO.minIBloodBag}
-                  onChange={value => setEventData(prev => ({
-                    ...prev,
-                    bloodQuotaDTO: {
-                      ...prev.bloodQuotaDTO,
-                      minIBloodBag: value || 0
-                    }
-                  }))}
-                  style={{ width: '100%' }}
-                />
-              </Form.Item>
-            </Col>
-            
-            <Col span={12}>
-              <Form.Item label="Số túi máu tối đa">
-                <InputNumber
-                  min={eventData.bloodQuotaDTO.minIBloodBag}
-                  value={eventData.bloodQuotaDTO.maxIBloodBag}
-                  onChange={value => setEventData(prev => ({
-                    ...prev,
-                    bloodQuotaDTO: {
-                      ...prev.bloodQuotaDTO,
-                      maxIBloodBag: value || 0
-                    }
-                  }))}
-                  style={{ width: '100%' }}
-                />
-              </Form.Item>
-            </Col>
-            
-            <Col span={12}>
-              <Form.Item label="Chỉ tiêu mục tiêu">
-                <InputNumber
-                  min={eventData.bloodQuotaDTO.minIBloodBag}
-                  max={eventData.bloodQuotaDTO.maxIBloodBag}
-                  value={eventData.bloodQuotaDTO.goalIBloodBag}
-                  onChange={value => setEventData(prev => ({
-                    ...prev,
-                    bloodQuotaDTO: {
-                      ...prev.bloodQuotaDTO,
-                      goalIBloodBag: value || 0
-                    }
-                  }))}
-                  style={{ width: '100%' }}
-                />
-              </Form.Item>
-            </Col>
-            
-            <Col span={12}>
-              <Form.Item label="Số túi dự phòng">
-                <InputNumber
-                  min={0}
-                  value={eventData.bloodQuotaDTO.additionalIBloodBag}
-                  onChange={value => setEventData(prev => ({
-                    ...prev,
-                    bloodQuotaDTO: {
-                      ...prev.bloodQuotaDTO,
-                      additionalIBloodBag: value || 0
-                    }
-                  }))}
-                  style={{ width: '100%' }}
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-        </Card>
-      ),
-    }
-  ];
-
   return (
-    <div style={{ padding: 24, maxWidth: 1000, margin: '0 auto' }}>
-      <Title level={3} style={{ textAlign: 'center', marginBottom: 24 }}>
-        Thêm sự kiện hiến máu mới
-      </Title>
-      
-      <Steps current={currentStep} style={{ marginBottom: 32 }}>
-        {steps.map(item => (
-          <Step key={item.title} title={item.title} />
-        ))}
-      </Steps>
+    <LocalizationProvider dateAdapter={AdapterDateFns}>
+      <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-900">Tạo sự kiện hiến máu mới</h1>
+            <p className="mt-2 text-sm text-gray-600">Điền đầy đủ thông tin bên dưới để tạo sự kiện</p>
+          </div>
 
-      <div style={{ background: '#fff', padding: 24, borderRadius: 8 }}>
-        {steps[currentStep].content}
+          <form onSubmit={handleSubmit} className="bg-white shadow rounded-lg p-6 sm:p-8">
+            <div className="space-y-6">
+              {/* Tên sự kiện */}
+              <div>
+                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+                  Tên sự kiện <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="title"
+                  name="title"
+                  type="text"
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  value={formData.title}
+                  onChange={handleChange}
+                />
+              </div>
+
+              {/* Đơn vị hiến máu */}
+              <div>
+                <label htmlFor="unit" className="block text-sm font-medium text-gray-700 mb-1">
+                  Đơn vị hiến máu <span className="text-red-500">*</span>
+                </label>
+                <select
+                  id="unit"
+                  name="unit"
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  value={formData.unit}
+                  onChange={handleChange}
+                >
+                  <option value="">Chọn đơn vị</option>
+                  {donationUnits.map((unit) => (
+                    <option key={unit.id} value={unit.id}>
+                      {unit.unit} - {unit.location}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Ngày và trạng thái */}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Ngày hiến máu <span className="text-red-500">*</span>
+                  </label>
+                  <DatePicker
+                    value={formData.donateDate}
+                    onChange={(value) => setFormData(prev => ({ ...prev, donateDate: value }))}
+                    className="w-full"
+                    slotProps={{
+                      textField: {
+                        size: 'small',
+                        fullWidth: true,
+                        className: 'w-full'
+                      }
+                    }}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
+                    Trạng thái <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="status"
+                    name="status"
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    value={formData.status}
+                    onChange={handleChange}
+                  >
+                    <option value="ACTIVE">Đang mở</option>
+                    <option value="FULL">Đã đầy</option>
+                    <option value="DONE">Đã kết thúc</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Thời gian bắt đầu và kết thúc */}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Thời gian bắt đầu <span className="text-red-500">*</span>
+                  </label>
+                  <TimePicker
+                    value={formData.eventStartTime}
+                    onChange={(value) => setFormData(prev => ({ ...prev, eventStartTime: value }))}
+                    className="w-full"
+                    slotProps={{
+                      textField: {
+                        size: 'small',
+                        fullWidth: true,
+                        className: 'w-full'
+                      }
+                    }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Thời gian kết thúc <span className="text-red-500">*</span>
+                  </label>
+                  <TimePicker
+                    value={formData.eventEndTime}
+                    onChange={(value) => setFormData(prev => ({ ...prev, eventEndTime: value }))}
+                    className="w-full"
+                    slotProps={{
+                      textField: {
+                        size: 'small',
+                        fullWidth: true,
+                        className: 'w-full'
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Giới hạn đăng ký */}
+              <div>
+                <label htmlFor="maxRegistrations" className="block text-sm font-medium text-gray-700 mb-1">
+                  Giới hạn đăng ký
+                </label>
+                <input
+                  id="maxRegistrations"
+                  name="maxRegistrations"
+                  type="number"
+                  min="0"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  value={formData.maxRegistrations}
+                  onChange={handleChange}
+                />
+              </div>
+
+              {/* Chỉ tiêu máu */}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="minIBloodBag" className="block text-sm font-medium text-gray-700 mb-1">
+                    Túi máu tối thiểu
+                  </label>
+                  <input
+                    id="minIBloodBag"
+                    name="minIBloodBag"
+                    type="number"
+                    min="0"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    value={formData.minIBloodBag}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="maxIBloodBag" className="block text-sm font-medium text-gray-700 mb-1">
+                    Túi máu tối đa
+                  </label>
+                  <input
+                    id="maxIBloodBag"
+                    name="maxIBloodBag"
+                    type="number"
+                    min="0"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    value={formData.maxIBloodBag}
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="goalIBloodBag" className="block text-sm font-medium text-gray-700 mb-1">
+                    Chỉ tiêu máu
+                  </label>
+                  <input
+                    id="goalIBloodBag"
+                    name="goalIBloodBag"
+                    type="number"
+                    min="0"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    value={formData.goalIBloodBag}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="additionalIBloodBag" className="block text-sm font-medium text-gray-700 mb-1">
+                    Túi máu dự phòng
+                  </label>
+                  <input
+                    id="additionalIBloodBag"
+                    name="additionalIBloodBag"
+                    type="number"
+                    min="0"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    value={formData.additionalIBloodBag}
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
+
+              {/* Nút submit */}
+              <div className="pt-4">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                >
+                  {loading ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Đang xử lý...
+                    </>
+                  ) : 'Tạo sự kiện'}
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
       </div>
 
-      <Divider />
-
-      <div style={{ textAlign: 'center', marginTop: 24 }}>
-        {currentStep > 0 && (
-          <Button 
-            style={{ marginRight: 16, width: 120 }}
-            onClick={() => setCurrentStep(currentStep - 1)}
-            disabled={loading}
-          >
-            Quay lại
-          </Button>
-        )}
-        {currentStep < steps.length - 1 ? (
-          <Button 
-            type="primary" 
-            style={{ width: 120 }}
-            onClick={handleEventInfoSubmit}
-            loading={loading}
-          >
-            Tiếp theo
-          </Button>
-        ) : (
-          <Button 
-            type="primary" 
-            style={{ width: 120 }}
-            onClick={handleBloodQuotaSubmit}
-            loading={loading}
-          >
-            Hoàn thành
-          </Button>
-        )}
-      </div>
-    </div>
+      {/* Snackbar thông báo */}
+      {snackbar.open && (
+        <div className="fixed bottom-4 right-4 z-50">
+          <div className={`px-6 py-4 rounded-md shadow-lg text-white ${
+            snackbar.severity === 'success' ? 'bg-green-500' : 'bg-red-500'
+          }`}>
+            <div className="flex items-center">
+              {snackbar.severity === 'success' ? (
+                <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+              ) : (
+                <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              )}
+              <span>{snackbar.message}</span>
+            </div>
+          </div>
+        </div>
+      )}
+    </LocalizationProvider>
   );
 };
 

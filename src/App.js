@@ -16,6 +16,7 @@ import Events from "./pages/Events/Events";
 
 import AdminLayout from "./layouts/AdminLayout/AdminLayout";
 import Dashboard from "./pages/Admin/Dashboard/Dashboard";
+import AppointmentDetail from "./pages/HistoryAppoint/AppointmentDetail";
 
 import BloodDonationHistoryList from "./pages/Admin/BloodDonationHistories/BloodDonationHistoryList/BloodDonationHistoryList";
 import BloodDonationHistoryEdit from "./pages/Admin/BloodDonationHistories/BloodDonationHistoryEdit/BloodDonationHistoryEdit";
@@ -77,6 +78,10 @@ const App = () => {
           path: ROUTE_PATH.APPOINTMENTS,
           element: <Appointments />,
         },
+        {
+          path: ROUTE_PATH.HISTORYAPPOINT_DETAIL(":id"),
+             element: <AppointmentDetail />,
+        }, 
         {
           path: ROUTE_PATH.BOOKING,
           element: <Booking />,

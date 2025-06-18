@@ -373,7 +373,7 @@ class UserService{
           // Gửi yêu cầu tới API backend
           const response = await axiosInstance.get(`/events/by-unit`, {
               params: {
-                                    unitId: unitId || ""
+                unitId: unitId || ""
               },
               headers: {
                   Authorization: `Bearer ${token}`,
@@ -838,6 +838,18 @@ class UserService{
           throw err;
         }
       }
+    static async deleteBloodInventory(id, token){
+            try{
+                const response = await axiosInstance.delete(`/blood-inventory/delete/${id}`, 
+                {
+                    headers: {Authorization: `Bearer ${token}`}
+                })
+                return response.data;
+            }catch(err){
+                throw err;
+            }
+        }
+
       //add
       static async addBloodInventory(token, payLoad, appointmentId) {
         try {

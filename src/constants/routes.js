@@ -5,6 +5,7 @@ export const ROUTE_PATH = {
   BOOKING: "/appointments/booking",
   CERTIFICATE: "/certificate",
   HISTORYAPPOINT: "/historyappoint",
+  HISTORYAPPOINT_DETAIL: (id) => `/historyappoint/${id}`,
   NEWS: "/news",
   CONTACT: "/contact",
   PROFILE: "/profile",

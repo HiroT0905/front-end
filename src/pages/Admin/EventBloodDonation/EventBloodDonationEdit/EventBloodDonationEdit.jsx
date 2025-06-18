@@ -19,7 +19,7 @@ const EventBloodDonationEdit = () => {
     const fetchDonationUnits = async () => {
       try {
         const units = await UserService.getAllUnits();
-        setDonationUnits(units.donationUnitDTOList || []);
+        setDonationUnits(units.donationUnitList || []);
       } catch (error) {
         console.error("Error fetching donation units:", error);
       }

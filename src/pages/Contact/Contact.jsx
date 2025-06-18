@@ -48,8 +48,8 @@ function Contact() {
             <span className="font-medium text-xl">Email</span>
           </div>
           <p className="text-base mb-6">
-            <a href="mailto:sonmaket0201@gmail.com" target="_blank">
-              sonmaket0201@gmail.com
+            <a href="mailto:chitin952003@gmail.com" target="_blank">
+              chitin952003@gmail.com
             </a>
           </p>
           <hr className="border-white opacity-50 my-6" />
@@ -80,11 +80,11 @@ function Contact() {
             Nếu bạn có bất kỳ thắc mắc nào liên quan đến các hoạt động hiến máu
             tình nguyện, xin vui lòng liên hệ với chúng tôi qua địa chỉ email
             <a
-              href="mailto:sonmaket0201@gmail.com"
+              href="mailto:chitin952003@gmail.com"
               target="_blank"
               className="text-blue-600 ml-1"
             >
-              sonmaket0201@gmail.com
+              chitin952003@gmail.com
             </a>{" "}
             hoặc gửi thông tin cho chúng tôi theo mẫu bên dưới:
           </p>

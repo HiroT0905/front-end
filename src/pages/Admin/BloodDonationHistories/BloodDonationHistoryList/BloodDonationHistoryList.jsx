@@ -68,12 +68,12 @@ const BloodDonationHistoryList = () => {
         key: "actions",
         render: (_, record) => (
           <Flex gap="12px">
-            <Link
+            {/* <Link
               className="text-blue-500"
               to={ROUTE_PATH.EDIT_BLOOD_DONATION_HISTORY(record.id)}
             >
               Chỉnh sửa
-            </Link>
+            </Link> */}
             <Popconfirm
               title="Xóa dữ liệu"
               description="Bạn có chắc chắn muốn xóa mục này không?"
