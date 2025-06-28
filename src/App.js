@@ -9,6 +9,7 @@ import Booking from "./pages/Booking/Booking";
 import Certificate from "./pages/Certificate/certificate";
 import HistoryAppoint from "./pages/HistoryAppoint/HistoryAppoint";
 import News from "./pages/News/News";
+import NewsDetail from "./pages/News/NewsDetail";
 import Contact from "./pages/Contact/Contact";
 import Settings from "./pages/Account/Settings";
 import Profile from "./pages/Account/Profile";
@@ -101,6 +102,10 @@ const App = () => {
         {
           path: ROUTE_PATH.NEWS,
           element: <News />,
+        },
+        {
+          path: ROUTE_PATH.NEWSDETAIL(":id"), 
+          element: <NewsDetail/>
         },
         {
           path: ROUTE_PATH.CONTACT,

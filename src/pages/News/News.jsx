@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import UserService from "../../service/userService";
-
+import { Link } from "react-router-dom";
 function TinTuc() {
   const [newsList, setNewsList] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -39,9 +39,9 @@ function TinTuc() {
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
         {newsList.length > 0 &&
           newsList.map((news) => (
-            <a
+            <Link
               key={news.id} // Mỗi phần tử tin tức cần có 'key' duy nhất
-              href="#"
+              to={`/news/${news.id}`}
               className="bg-white p-4 rounded-lg shadow-lg hover:shadow-xl transition-shadow duration-300"
             >
               <img
@@ -53,11 +53,12 @@ function TinTuc() {
                 <h2 className="text-xl font-semibold text-gray-900 line-clamp-2">
                   {news.title}
                 </h2>
-                <p className="mt-2 text-gray-600 line-clamp-3">
-                  {news.content}
-                </p>
+                <div
+                  className="mt-2 text-gray-600 line-clamp-3"
+                  dangerouslySetInnerHTML={{ __html: news.content }}
+                ></div>
               </div>
-            </a>
+            </Link>
           ))}
       </div>
     </div>

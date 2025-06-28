@@ -14,6 +14,7 @@ class UserService{
             throw err;
         }
     }
+   
     static async register(userData, token) {
         try {
             // Conditionally set headers if token is provided
@@ -484,6 +485,20 @@ class UserService{
 
 
       //NEws Service
+      static async getNewsById(id, token) {
+        try{
+          const response = await axiosInstance.get(`/news/${id}`,{
+              headers: { Authorization: `Bearer ${token}` },
+          })
+
+          return response.data;
+        } catch (err) {
+            console.error("Lỗi khi cố gắng truy cập thông tin bài viết:", err.message);
+          throw err;
+        }
+      }
+
+
       static async getAllNewsForUser() {
         try {
           const response = await axiosInstance.get('/news')
@@ -559,7 +574,6 @@ class UserService{
           if (response.data ) {
             return response.data; // Trả về toàn bộ dữ liệu từ API
           } else {
-            console.error("Dữ liệu không có trường newsDTO");
             return {}; // Trả về object rỗng nếu dữ liệu không đúng
           }
         } catch (err) {
