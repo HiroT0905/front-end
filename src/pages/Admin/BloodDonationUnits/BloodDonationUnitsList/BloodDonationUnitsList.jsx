@@ -21,7 +21,7 @@ const BloodDonationUnitList = () => {
       try {
         const response = await UserService.getAllUnits(token);
         const allUnits = response.donationUnitList;
-        setUnits(allUnits);
+        setUnits(Array.isArray (allUnits) ? allUnits : []);
         setFilteredUnits(allUnits);
       } catch (error) {
         console.error("Lỗi khi lấy danh sách đơn vị:", error.message);

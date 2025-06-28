@@ -41,14 +41,25 @@ const NewsList = () => {
   const columns = useMemo(() => {
     return [
       {
-        title: "Tiêu đề",
-        key: "title",
-        dataIndex: "title",
-      },
-      {
         title: "Nội dung",
         key: "content",
         dataIndex: "content",
+        render: (text, record) => {
+          const plainText = text.replace(/<[^>]+>/g, ""); // Xóa HTML tags
+          const preview = plainText.length > 100 ? plainText.slice(0, 100) + "..." : plainText;
+
+          return (
+            <span>
+              {preview}{" "}
+              <Link
+                className="text-blue-500"
+                to={ROUTE_PATH.NEWS_ADMIN_EDIT(record.id)}
+              >
+                Xem
+              </Link>
+            </span>
+          );
+        },
       },
       {
         title: "Hành động",

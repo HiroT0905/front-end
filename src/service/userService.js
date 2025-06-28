@@ -14,6 +14,7 @@ class UserService{
             throw err;
         }
     }
+   
     static async register(userData, token) {
         try {
             // Conditionally set headers if token is provided
@@ -32,6 +33,8 @@ class UserService{
                 } else if (err.response.status === 500) {
                     // Internal server error
                     throw new Error("Server error. Please try again later.");
+                } else if (err.response.status === 409) {
+                  throw new Error('Người dùng đã tồn tại')
                 }
                 throw new Error(`Error: ${err.response.data.message || "An error occurred during registration."}`);
             } else if (err.request) {
@@ -96,6 +99,25 @@ class UserService{
         }
     }
 
+   static async updateOwnUserProfile(token, cccd, userData) {
+    try {
+        const response = await axiosInstance.put(
+            `/update-own-profile/${cccd}`,
+            userData,
+            {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            }
+        );
+        return response.data;
+    } catch (error) {
+        console.error("Error updating user profile:", error);
+        throw error;
+    }
+}
+
     //Update User
     static async updateUser(username, userData, token) {
         try {
@@ -117,6 +139,24 @@ class UserService{
         }
       }
 
+    static async getUserById(username) {
+      try {
+      
+          const response = await axiosInstance.get(`/admin/get-users/${username}`, {
+              headers: {
+                  "Content-Type": "application/json",
+              },
+          });
+  
+          return response.data;
+      } catch (err) {
+          console.error("Error fetching profile:", err.message);
+          if (err.response) {
+              console.error("Server response:", err.response.data);
+          }
+          throw new Error("Không thể lấy thông tin hồ sơ.");
+      }
+    }
 
     /**AUTHENTICATION CHECKER */
     static logout(){
@@ -288,20 +328,19 @@ class UserService{
     //************EVENT
 
     //add Event
-    static async addEvent(formData) {
-        const result = await axiosInstance.post("/admin/events/add", formData, {
-            headers: {
-                ...this.getHeader(),
-                'Content-Type': 'multipart/form-data'
-            }
-        });
-
-        if (result.status === 200) {
-            return result.data; // Trả về dữ liệu từ phản hồi (có thể là thông báo thành công hoặc dữ liệu liên quan)
-          } else {
-            throw new Error("Failed to request password reset");
-          }
-    }
+   static async addEvent(eventData, token) {
+  try {
+    const response = await axiosInstance.post('/events/add', eventData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json' // Quan trọng: chỉ định JSON
+      }
+    });
+    return response.data;
+  } catch (err) {
+    throw err;
+  }
+}
 
     //Get All EventEvent
     static async getAllEvents(token){
@@ -356,7 +395,7 @@ class UserService{
           // Gửi yêu cầu tới API backend
           const response = await axiosInstance.get(`/events/by-unit`, {
               params: {
-                                    unitId: unitId || ""
+                unitId: unitId || ""
               },
               headers: {
                   Authorization: `Bearer ${token}`,
@@ -428,35 +467,38 @@ class UserService{
 
 
     //Update Eventnt
-    static async updateEvent(id, eventData, token) {
-        const formData = new FormData();
-        formData.append("name", eventData.name);
-        formData.append("eventDate", eventData.eventDate);
-        formData.append("eventStartTime", eventData.eventStartTime);
-        formData.append("eventEndTime", eventData.eventEndTime);
-        formData.append("maxRegistrations", eventData.maxRegistrations);
-        formData.append("status",eventData.status);
-        if (eventData.donationUnitId) {
-          formData.append("donationUnitId", eventData.donationUnitId);
+            static async updateEvent(id, eventData, token) {
+            try {
+                const response = await axiosInstance.put(`/events/update/${id}`, eventData, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                return response.data;
+            } catch (error) {
+                console.error("Error updating event:", error);
+                throw error;
+            }
         }
-      
-        try {
-          const response = await axiosInstance.put(`/events/update/${id}`, formData, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "multipart/form-data",
-            },
-          });
-          return response.data; // Trả về sự kiện sau khi cập nhật
-        } catch (error) {
-          console.error("Error updating event:", error);
-          throw error;
-        }
-      }
 
 
 
       //NEws Service
+      static async getNewsById(id, token) {
+        try{
+          const response = await axiosInstance.get(`/news/${id}`,{
+              headers: { Authorization: `Bearer ${token}` },
+          })
+
+          return response.data;
+        } catch (err) {
+            console.error("Lỗi khi cố gắng truy cập thông tin bài viết:", err.message);
+          throw err;
+        }
+      }
+
+
       static async getAllNewsForUser() {
         try {
           const response = await axiosInstance.get('/news')
@@ -532,7 +574,6 @@ class UserService{
           if (response.data ) {
             return response.data; // Trả về toàn bộ dữ liệu từ API
           } else {
-            console.error("Dữ liệu không có trường newsDTO");
             return {}; // Trả về object rỗng nếu dữ liệu không đúng
           }
         } catch (err) {
@@ -790,6 +831,27 @@ class UserService{
 
 
     //BloodInventory
+    //update Blood Inventory
+  static async updateBloodInventory(token,id, bloodInventoryDTO) {
+  // bloodInventoryDTO phải có các trường: id, donationType, quantity, lastUpdated, expirationDate, appointmentTO
+    try {
+      const response = await axiosInstance.put(`/blood-inventory/update/${id}`, bloodInventoryDTO, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}` // Truyền token vào headers
+        }
+      });
+
+      if (response.status !== 200) {
+        throw new Error("Failed to update blood inventory");
+      }
+      return response.data; // Trả về dữ liệu thành công
+    } catch (error) {
+      console.error("Error updating blood inventory:", error);
+      throw error; // Ném lỗi nếu có
+    }
+  }
+  
     //Get all
     static async getAllBloodInventory(token) {
         try {
@@ -832,6 +894,18 @@ class UserService{
           throw err;
         }
       }
+    static async deleteBloodInventory(id, token){
+            try{
+                const response = await axiosInstance.delete(`/blood-inventory/delete/${id}`, 
+                {
+                    headers: {Authorization: `Bearer ${token}`}
+                })
+                return response.data;
+            }catch(err){
+                throw err;
+            }
+      }
+
       //add
       static async addBloodInventory(token, payLoad, appointmentId) {
         try {

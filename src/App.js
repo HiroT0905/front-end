@@ -9,6 +9,7 @@ import Booking from "./pages/Booking/Booking";
 import Certificate from "./pages/Certificate/certificate";
 import HistoryAppoint from "./pages/HistoryAppoint/HistoryAppoint";
 import News from "./pages/News/News";
+import NewsDetail from "./pages/News/NewsDetail";
 import Contact from "./pages/Contact/Contact";
 import Settings from "./pages/Account/Settings";
 import Profile from "./pages/Account/Profile";
@@ -16,6 +17,7 @@ import Events from "./pages/Events/Events";
 
 import AdminLayout from "./layouts/AdminLayout/AdminLayout";
 import Dashboard from "./pages/Admin/Dashboard/Dashboard";
+import AppointmentDetail from "./pages/HistoryAppoint/AppointmentDetail";
 
 import BloodDonationHistoryList from "./pages/Admin/BloodDonationHistories/BloodDonationHistoryList/BloodDonationHistoryList";
 import BloodDonationHistoryEdit from "./pages/Admin/BloodDonationHistories/BloodDonationHistoryEdit/BloodDonationHistoryEdit";
@@ -78,6 +80,10 @@ const App = () => {
           element: <Appointments />,
         },
         {
+          path: ROUTE_PATH.HISTORYAPPOINT_DETAIL(":id"),
+             element: <AppointmentDetail />,
+        }, 
+        {
           path: ROUTE_PATH.BOOKING,
           element: <Booking />,
         },
@@ -96,6 +102,10 @@ const App = () => {
         {
           path: ROUTE_PATH.NEWS,
           element: <News />,
+        },
+        {
+          path: ROUTE_PATH.NEWSDETAIL(":id"), 
+          element: <NewsDetail/>
         },
         {
           path: ROUTE_PATH.CONTACT,

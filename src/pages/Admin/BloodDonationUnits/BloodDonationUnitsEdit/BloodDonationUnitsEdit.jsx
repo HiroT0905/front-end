@@ -7,7 +7,7 @@ const BloodDonationUnitsEdit = () => {
   const { id } = useParams(); // Lấy ID từ URL
   const navigate = useNavigate();
   const [unitData, setUnitData] = useState({
-    name: "",
+    unit: "",
     location: "",
     email: "",
     phone: "",
@@ -27,7 +27,7 @@ const BloodDonationUnitsEdit = () => {
         const token = localStorage.getItem("token"); // Lấy token từ localStorage
         const response = await ApiService.getDonationUnitById(id, token); // Gọi API với token
         setUnitData({
-          name: response.donationUnitDTO.name,
+          unit: response.donationUnitDTO.unit,
           location: response.donationUnitDTO.location,
           email: response.donationUnitDTO.email,
           phone: response.donationUnitDTO.phone,
@@ -68,7 +68,7 @@ const BloodDonationUnitsEdit = () => {
   
       // Tạo FormData để gửi dữ liệu
       const formData = new FormData();
-      formData.append("name", unitData.name); // Thêm thông tin tên
+      formData.append("unit", unitData.unit); // Thêm thông tin tên
       formData.append("location", unitData.location); // Thêm thông tin location
       formData.append("email", unitData.email); // Thêm thông tin email
       formData.append("phone", unitData.phone); // Thêm thông tin phone
@@ -125,8 +125,8 @@ const BloodDonationUnitsEdit = () => {
             <div className="w-full">
               <TextField
                 label="Tên đơn vị"
-                name="name"
-                value={unitData.name}
+                name="unit"
+                value={unitData.unit}
                 onChange={handleInputChange}
                 fullWidth
                 required

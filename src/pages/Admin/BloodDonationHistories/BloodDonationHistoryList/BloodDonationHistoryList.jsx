@@ -17,7 +17,7 @@ const BloodDonationHistoryList = () => {
       try {
         const response = await UserService.getAllBloodInventory(token);
         setBloodInventories(response.bloodInventoryDTOList || []);
-        message.success("Data loaded successfully!");
+  
       } catch (error) {
         message.error("Failed to fetch data: " + error.message);
       } finally {
@@ -42,7 +42,7 @@ const BloodDonationHistoryList = () => {
         dataIndex: "donationType",
       },
       {
-        title: "Số lượng (ml)",
+        title: "Thể tích (ml)",
         key: "quantity",
         dataIndex: "quantity",
       },
@@ -94,7 +94,7 @@ const BloodDonationHistoryList = () => {
 
   const handleDelete = async (id) => {
     try {
-      await UserService.deleteBloodInventory(token, id);
+      await UserService.deleteBloodInventory(id, token);
       setBloodInventories(bloodInventories.filter((item) => item.id !== id));
       message.success("Deleted successfully!");
     } catch (error) {

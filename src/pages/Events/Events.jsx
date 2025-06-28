@@ -160,8 +160,7 @@ const formatTimeSlots = (timeSlots) => {
           />
         </div>
         <div className="flex flex-wrap gap-4">
-          <Button type="default" className="px-6">Gần tôi</Button>
-          <Button type="default" className="px-6">Đề xuất</Button>
+         
           <Select
             className="w-60"
             onChange={handleUnitChange}
@@ -199,20 +198,20 @@ const formatTimeSlots = (timeSlots) => {
                         Thời gian hoạt động: <b>{formatDate(event.donateDate)} - Từ ({formatTime(event.eventStartTime)} đến {formatTime(event.eventEndTime)}) </b>
                       </p>
                       <p className="text-sm text-gray-500 mb-1">
-                        Thời gian hiến máu:<b>{formatTimeSlots(event.donationTimeSlotDTO)}</b> 
+                        Thời gian hiến máu: <b>{formatTimeSlots(event.donationTimeSlotDTO)}</b> 
                       </p>                   
                     </div>
                   </div>
                   <div className="flex flex-col items-start gap-2">
                     <p className="text-xs text-gray-500 ">Số lượng đăng ký</p>
                       <p className="text-xl font-bold text-blue-700">
-                        {event.currentRegistrations} / {event.bloodQuotaDTO.maxIBloodBag}
+                        {event.currentRegistrations} / {event.maxRegistrations}
                       </p>
                     <Button
                       type="primary"
                       onClick={() => handleBooking(event)}
                       className="px-6 bg-blue-700"
-                      disabled={event.currentRegistrations >= event.bloodQuotaDTO.maxIBloodBag}
+                      disabled={event.currentRegistrations >= event.maxRegistrations}
                     >
                       Đặt lịch
                     </Button>

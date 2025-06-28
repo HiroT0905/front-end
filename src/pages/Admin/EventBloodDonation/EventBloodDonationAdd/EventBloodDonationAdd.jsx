@@ -1,92 +1,89 @@
-import React, { useState, useEffect } from "react";
-import {
-  Button,
-  Form,
-  Input,
-  DatePicker,
-  TimePicker,
-  Select,
-  notification,
-  Row,
-  Col,
-} from "antd";
+import React, { useEffect, useState } from "react";
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { DatePicker, TimePicker } from "@mui/x-date-pickers";
+import dayjs from "dayjs";
 import { useNavigate } from "react-router-dom";
-import UserService from "../../../../service/userService";
+import ApiService from "../../../../service/userService";
 
 const EventBloodDonationAdd = () => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [filteredUnits, setFilteredUnits] = useState([]);
-  const [eventData, setEventData] = useState({
-    eventDate: "",
-    eventStartTime: "",
-    eventEndTime: "",
-    maxRegistrations: "",
-    unitId: "",
-    status: "ACTIVE",
-  });
-  const [units, setUnits] = useState([]);
-
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [donationUnits, setDonationUnits] = useState([]);
+  const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" });
+
+  const [formData, setFormData] = useState({
+    title: "",
+    donateDate: null,
+    eventStartTime: null,
+    eventEndTime: null,
+    unit: "",
+    maxRegistrations: 0,
+    status: "ACTIVE",
+    minIBloodBag: 0,
+    maxIBloodBag: 0,
+    goalIBloodBag: 0,
+    additionalIBloodBag: 0,
+  });
 
   useEffect(() => {
-    const fetchUnits = async () => {
-      const token = localStorage.getItem("token");
-      try {
-        const response = await UserService.getAllUnits(token);
-        const allUnits = response.donationUnitList;
-        setUnits(allUnits);
-        setFilteredUnits(allUnits);
-      } catch (error) {
-        console.error("Error fetching units:", error.message);
-      }
-    };
-
-    fetchUnits();
+    ApiService.getAllUnits()
+      .then((res) => {
+        setDonationUnits(res.donationUnitList || []);
+      })
+      .catch(() => {
+        setSnackbar({
+          open: true,
+          message: "Không thể tải danh sách đơn vị hiến máu.",
+          severity: "error",
+        });
+      });
   }, []);
 
-  const handleInputChange = (e) => {
+  const handleChange = (e) => {
     const { name, value } = e.target;
-    setEventData({
-      ...eventData,
-      [name]: value,
-    });
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = async () => {
-    setLoading(true);
-    try {
-      const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:8080/events/add", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(eventData),
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    const requiredFields = ['title', 'donateDate', 'eventStartTime', 'eventEndTime', 'unit', 'status'];
+    const isEmpty = requiredFields.some(field => !formData[field]);
+    
+    if (isEmpty) {
+      setSnackbar({
+        open: true,
+        message: "Vui lòng điền đầy đủ thông tin bắt buộc.",
+        severity: "error",
       });
-      console.log("response", response
-      );
-      const data = await response.json();
-      if (response.status ===200) {
-        notification.success({
-          message: "Success",
-          description: "Event added successfully!",
-        });
-        navigate("/admin/event-blood-donation");
-      } else {
-        setError(data.message);
-        notification.error({
-          message: "Error",
-          description: data.message || "Failed to add event.",
-        });
-      }
-    } catch (error) {
-      console.error("Error adding event:", error);
-      setError("Failed to add event.");
-      notification.error({
-        message: "Error",
-        description: "An error occurred while adding the event.",
+      return;
+    }
+
+    const payload = {
+      ...formData,
+      donateDate: dayjs(formData.donateDate).format("YYYY-MM-DD"),
+      eventStartTime: dayjs(formData.eventStartTime).format("HH:mm:ss"),
+      eventEndTime: dayjs(formData.eventEndTime).format("HH:mm:ss"),
+      maxRegistrations: Number(formData.maxRegistrations),
+      bloodQuotaDTO: {
+        minIBloodBag: Number(formData.minIBloodBag),
+        maxIBloodBag: Number(formData.maxIBloodBag),
+        goalIBloodBag: Number(formData.goalIBloodBag),
+        additionalIBloodBag: Number(formData.additionalIBloodBag),
+      },
+    };
+
+    try {
+      setLoading(true);
+      await ApiService.addEvent(payload);
+      setSnackbar({ open: true, message: "Tạo sự kiện thành công!", severity: "success" });
+      setTimeout(() => navigate("/admin/event-blood-donation"), 1500);
+    } catch (err) {
+      setSnackbar({
+        open: true,
+        message: err.response?.data?.message || "Tạo sự kiện thất bại!",
+        severity: "error",
       });
     } finally {
       setLoading(false);
@@ -94,133 +91,254 @@ const EventBloodDonationAdd = () => {
   };
 
   return (
-    <div style={{ padding: "20px", maxWidth: "700px", margin: "0 auto" }}>
-      <h1 style={{ textAlign: "center", marginBottom: "20px" }}>
-        Add Event for Blood Donation
-      </h1>
-      <Form
-        onFinish={handleSubmit}
-        layout="vertical"
-        style={{
-          background: "#fff",
-          padding: "20px",
-          borderRadius: "8px",
-          boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
-        }}
-      >
-        <Row gutter={[16, 16]}>
-          <Col span={12}>
-            <Form.Item
-              name="eventDate"
-              label="Event Date"
-              initialValue={eventData.eventDate}
-              rules={[{ required: true, message: "Please select event date" }]}
-            >
-              <DatePicker
-                name="eventDate"
-                value={eventData.eventDate}
-                onChange={(date, dateString) =>
-                  setEventData({ ...eventData, eventDate: dateString })
-                }
-                format="YYYY-MM-DD"
-              />
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item
-              name="eventStartTime"
-              label="Start Time"
-              initialValue={eventData.eventStartTime}
-              rules={[{ required: true, message: "Please select start time" }]}
-            >
-              <TimePicker
-                name="eventStartTime"
-                value={eventData.eventStartTime}
-                onChange={(time, timeString) =>
-                  setEventData({ ...eventData, eventStartTime: timeString })
-                }
-                format="HH:mm"
-              />
-            </Form.Item>
-          </Col>
-        </Row>
+    <LocalizationProvider dateAdapter={AdapterDateFns}>
+      <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-900">Tạo sự kiện hiến máu mới</h1>
+            <p className="mt-2 text-sm text-gray-600">Điền đầy đủ thông tin bên dưới để tạo sự kiện</p>
+          </div>
 
-        <Row gutter={[16, 16]}>
-          <Col span={12}>
-            <Form.Item
-              name="eventEndTime"
-              label="End Time"
-              initialValue={eventData.eventEndTime}
-              rules={[{ required: true, message: "Please select end time" }]}
-            >
-              <TimePicker
-                name="eventEndTime"
-                value={eventData.eventEndTime}
-                onChange={(time, timeString) =>
-                  setEventData({ ...eventData, eventEndTime: timeString })
-                }
-                format="HH:mm"
-              />
-            </Form.Item>
-          </Col>
-          <Col span={12}>
-            <Form.Item
-              name="maxRegistrations"
-              label="Max Registrations"
-              initialValue={eventData.maxRegistrations}
-              rules={[
-                { required: true, message: "Please enter max registrations" },
-              ]}
-            >
-              <Input
-                type="number"
-                name="maxRegistrations"
-                value={eventData.maxRegistrations}
-                onChange={handleInputChange}
-                placeholder="Max Registrations"
-              />
-            </Form.Item>
-          </Col>
-        </Row>
+          <form onSubmit={handleSubmit} className="bg-white shadow rounded-lg p-6 sm:p-8">
+            <div className="space-y-6">
+              {/* Tên sự kiện */}
+              <div>
+                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
+                  Tên sự kiện <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="title"
+                  name="title"
+                  type="text"
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  value={formData.title}
+                  onChange={handleChange}
+                />
+              </div>
 
-        <Form.Item
-          name="unitId"
-          label="Select Donation Unit"
-          initialValue={eventData.unitId}
-          rules={[{ required: true, message: "Please select a unit" }]}
-        >
-          <Select
-            name="unitId"
-            value={eventData.unitId}
-            onChange={(value) => setEventData({ ...eventData, unitId: value })}
-            placeholder="Select Donation Unit"
-          >
-            {units.map((unit) => (
-              <Select.Option key={unit.id} value={unit.id}>
-                {unit.name}
-              </Select.Option>
-            ))}
-          </Select>
-        </Form.Item>
+              {/* Đơn vị hiến máu */}
+              <div>
+                <label htmlFor="unit" className="block text-sm font-medium text-gray-700 mb-1">
+                  Đơn vị hiến máu <span className="text-red-500">*</span>
+                </label>
+                <select
+                  id="unit"
+                  name="unit"
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  value={formData.unit}
+                  onChange={handleChange}
+                >
+                  <option value="">Chọn đơn vị</option>
+                  {donationUnits.map((unit) => (
+                    <option key={unit.id} value={unit.id}>
+                      {unit.unit} - {unit.location}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-        <Form.Item>
-          <Button
-            type="primary"
-            htmlType="submit"
-            block
-            loading={loading}
-            style={{
-              background: "#1890ff",
-              borderColor: "#1890ff",
-              color: "#fff",
-              fontWeight: "bold",
-            }}
-          >
-            {loading ? "Adding..." : "Add Event"}
-          </Button>
-        </Form.Item>
-      </Form>
-    </div>
+              {/* Ngày và trạng thái */}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Ngày hiến máu <span className="text-red-500">*</span>
+                  </label>
+                  <DatePicker
+                    value={formData.donateDate}
+                    onChange={(value) => setFormData(prev => ({ ...prev, donateDate: value }))}
+                    className="w-full"
+                    slotProps={{
+                      textField: {
+                        size: 'small',
+                        fullWidth: true,
+                        className: 'w-full'
+                      }
+                    }}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-1">
+                    Trạng thái <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="status"
+                    name="status"
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    value={formData.status}
+                    onChange={handleChange}
+                  >
+                    <option value="ACTIVE">Đang mở</option>
+                    <option value="FULL">Đã đầy</option>
+                    <option value="DONE">Đã kết thúc</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Thời gian bắt đầu và kết thúc */}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Thời gian bắt đầu hoạt động <span className="text-red-500">*</span>
+                  </label>
+                  <TimePicker
+                    value={formData.eventStartTime}
+                    onChange={(value) => setFormData(prev => ({ ...prev, eventStartTime: value }))}
+                    className="w-full"
+                    slotProps={{
+                      textField: {
+                        size: 'small',
+                        fullWidth: true,
+                        className: 'w-full'
+                      }
+                    }}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Thời gian kết thúc <span className="text-red-500">*</span>
+                  </label>
+                  <TimePicker
+                    value={formData.eventEndTime}
+                    onChange={(value) => setFormData(prev => ({ ...prev, eventEndTime: value }))}
+                    className="w-full"
+                    slotProps={{
+                      textField: {
+                        size: 'small',
+                        fullWidth: true,
+                        className: 'w-full'
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Giới hạn đăng ký */}
+              <div>
+                <label htmlFor="maxRegistrations" className="block text-sm font-medium text-gray-700 mb-1">
+                  Giới hạn đăng ký
+                </label>
+                <input
+                  id="maxRegistrations"
+                  name="maxRegistrations"
+                  type="number"
+                  min="0"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  value={formData.maxRegistrations}
+                  onChange={handleChange}
+                />
+              </div>
+
+              {/* Chỉ tiêu máu */}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="minIBloodBag" className="block text-sm font-medium text-gray-700 mb-1">
+                    Túi máu tối thiểu
+                  </label>
+                  <input
+                    id="minIBloodBag"
+                    name="minIBloodBag"
+                    type="number"
+                    min="0"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    value={formData.minIBloodBag}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="maxIBloodBag" className="block text-sm font-medium text-gray-700 mb-1">
+                    Túi máu tối đa
+                  </label>
+                  <input
+                    id="maxIBloodBag"
+                    name="maxIBloodBag"
+                    type="number"
+                    min="0"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    value={formData.maxIBloodBag}
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="goalIBloodBag" className="block text-sm font-medium text-gray-700 mb-1">
+                    Chỉ tiêu máu
+                  </label>
+                  <input
+                    id="goalIBloodBag"
+                    name="goalIBloodBag"
+                    type="number"
+                    min="0"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    value={formData.goalIBloodBag}
+                    onChange={handleChange}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="additionalIBloodBag" className="block text-sm font-medium text-gray-700 mb-1">
+                    Túi máu dự phòng
+                  </label>
+                  <input
+                    id="additionalIBloodBag"
+                    name="additionalIBloodBag"
+                    type="number"
+                    min="0"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    value={formData.additionalIBloodBag}
+                    onChange={handleChange}
+                  />
+                </div>
+              </div>
+
+              {/* Nút submit */}
+              <div className="pt-4">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                >
+                  {loading ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Đang xử lý...
+                    </>
+                  ) : 'Tạo sự kiện'}
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      {/* Snackbar thông báo */}
+      {snackbar.open && (
+        <div className="fixed bottom-4 right-4 z-50">
+          <div className={`px-6 py-4 rounded-md shadow-lg text-white ${
+            snackbar.severity === 'success' ? 'bg-green-500' : 'bg-red-500'
+          }`}>
+            <div className="flex items-center">
+              {snackbar.severity === 'success' ? (
+                <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+              ) : (
+                <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              )}
+              <span>{snackbar.message}</span>
+            </div>
+          </div>
+        </div>
+      )}
+    </LocalizationProvider>
   );
 };
 

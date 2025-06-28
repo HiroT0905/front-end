@@ -26,12 +26,18 @@ const Appointments = () => {
         const appointmentRe = await UserService.getAppointmentPendingUser(token,username);
 
         setProfileInfo(response.user || []);
+        setAppointment(appointmentRe.appointments || []);
         const userAppointments = response.user?.appointments || [];
+        
+        response.user.appointments = appointmentRe.appointments || [];
         
         const pendingAppointment = userAppointments.find(
           (appointment) => appointment.status === "PENDING"
         );
-        setAppointment(pendingAppointment  || null);
+
+        console.log("Pending Appointment:", pendingAppointment);
+
+        setAppointment(appointmentRe.appointmentDTO  || null);
         if (pendingAppointment) {
           localStorage.setItem("AppointmentId", pendingAppointment.id);
         }
